@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PathEarlCore", "PathEarl\PathEarlCore.csproj", "{CEA18B75-36E4-4A3A-9D1C-3808E8E32763}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PathEarlViz", "PathEarlViz\PathEarlViz.csproj", "{825A709A-5B6F-42BA-B306-1E47EB22D007}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PathEarlImageSharpInterface", "PathEarlPixelLabInterface\PathEarlImageSharpInterface.csproj", "{067E0675-B94F-487B-8472-6EEC31348BCB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UT_PathEarlCore", "UT_PathEarlCore\UT_PathEarlCore.csproj", "{CD8FF697-8D6E-412C-A7CF-5844A56436B5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UT_PathEarlViz", "UT_PathEarlViz\UT_PathEarlViz.csproj", "{2BD7FBB9-C2D5-400D-B643-F1142274A406}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PathEarlScout", "PathEarlScout\PathEarlScout.csproj", "{8506DC32-62C5-4F31-B940-89D37C392648}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UT_PathEarlScout", "UT_PathEarlScout\UT_PathEarlScout.csproj", "{C1D671B8-A09F-40A4-9FE2-975D73EAAB4B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CEA18B75-36E4-4A3A-9D1C-3808E8E32763}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEA18B75-36E4-4A3A-9D1C-3808E8E32763}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEA18B75-36E4-4A3A-9D1C-3808E8E32763}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEA18B75-36E4-4A3A-9D1C-3808E8E32763}.Release|Any CPU.Build.0 = Release|Any CPU
+		{825A709A-5B6F-42BA-B306-1E47EB22D007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{825A709A-5B6F-42BA-B306-1E47EB22D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{825A709A-5B6F-42BA-B306-1E47EB22D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{825A709A-5B6F-42BA-B306-1E47EB22D007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{067E0675-B94F-487B-8472-6EEC31348BCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{067E0675-B94F-487B-8472-6EEC31348BCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{067E0675-B94F-487B-8472-6EEC31348BCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{067E0675-B94F-487B-8472-6EEC31348BCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD8FF697-8D6E-412C-A7CF-5844A56436B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD8FF697-8D6E-412C-A7CF-5844A56436B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD8FF697-8D6E-412C-A7CF-5844A56436B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD8FF697-8D6E-412C-A7CF-5844A56436B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BD7FBB9-C2D5-400D-B643-F1142274A406}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BD7FBB9-C2D5-400D-B643-F1142274A406}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BD7FBB9-C2D5-400D-B643-F1142274A406}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BD7FBB9-C2D5-400D-B643-F1142274A406}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8506DC32-62C5-4F31-B940-89D37C392648}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8506DC32-62C5-4F31-B940-89D37C392648}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8506DC32-62C5-4F31-B940-89D37C392648}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8506DC32-62C5-4F31-B940-89D37C392648}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1D671B8-A09F-40A4-9FE2-975D73EAAB4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1D671B8-A09F-40A4-9FE2-975D73EAAB4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D671B8-A09F-40A4-9FE2-975D73EAAB4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1D671B8-A09F-40A4-9FE2-975D73EAAB4B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CDAA705A-8AF4-4A03-9CEE-93E90AA940BA}
+	EndGlobalSection
+EndGlobal
