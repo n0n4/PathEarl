@@ -41,7 +41,7 @@ namespace UT_PathEarlScout
                     })
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("ocean", 3));
+                    list.Add(OutcomeTileType("ocean", LiteralFloat(3)));
                 });
 
             Layer<BasicTileInfo> firstLayer = Recycler.GetLayer();
@@ -51,47 +51,47 @@ namespace UT_PathEarlScout
             AddRule(firstLayer.Rules, "free-tiles",
                 IfCondition(CheckTileType("current", "void")),
                 (list) => {
-                    list.Add(OutcomeTileType("grass", 2));
-                    list.Add(OutcomeTileType("dirt", 0.6f));
-                    list.Add(OutcomeTileType("desert", 0.2f));
-                    list.Add(OutcomeTileType("swamp", 0.2f));
-                    list.Add(OutcomeTileType("water", 0.1f));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(2)));
+                    list.Add(OutcomeTileType("dirt", LiteralFloat(0.6f)));
+                    list.Add(OutcomeTileType("desert", LiteralFloat(0.2f)));
+                    list.Add(OutcomeTileType("swamp", LiteralFloat(0.2f)));
+                    list.Add(OutcomeTileType("water", LiteralFloat(0.1f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-dirt",
                 IfCondition(CheckTileType("current", "dirt")),
                 (list) => {
-                    list.Add(OutcomeTileType("dirt", 1f));
+                    list.Add(OutcomeTileType("dirt", LiteralFloat(1f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-grass",
                 IfCondition(CheckTileType("current", "grass")),
                 (list) => {
-                    list.Add(OutcomeTileType("grass", 2f));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(2f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-ocean",
                 IfCondition(CheckTileType("current", "ocean")),
                 (list) => {
-                    list.Add(OutcomeTileType("ocean", 20f));
+                    list.Add(OutcomeTileType("ocean", LiteralFloat(20f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-water",
                 IfCondition(CheckTileType("current", "water")),
                 (list) => {
-                    list.Add(OutcomeTileType("water", 2f));
+                    list.Add(OutcomeTileType("water", LiteralFloat(2f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-desert",
                 IfCondition(CheckTileType("current", "desert")),
                 (list) => {
-                    list.Add(OutcomeTileType("desert", 1f));
+                    list.Add(OutcomeTileType("desert", LiteralFloat(1f)));
                 });
 
             AddRule(firstLayer.Rules, "stay-swamp",
                 IfCondition(CheckTileType("current", "swamp")),
                 (list) => {
-                    list.Add(OutcomeTileType("swamp", 1f));
+                    list.Add(OutcomeTileType("swamp", LiteralFloat(1f)));
                 });
 
             AddRule(firstLayer.Rules, "preserve-clump",
@@ -102,7 +102,7 @@ namespace UT_PathEarlScout
                     ));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileTypeByKeyword("current", "type", 2.5f));
+                    list.Add(OutcomeTileTypeByKeyword("current", "type", LiteralFloat(2.5f)));
                 });
 
             AddRule(firstLayer.Rules, "evaporate",
@@ -113,8 +113,8 @@ namespace UT_PathEarlScout
                     ));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileType("dirt", 2.5f));
-                    list.Add(OutcomeTileType("grass", 2.5f));
+                    list.Add(OutcomeTileType("dirt", LiteralFloat(2.5f)));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(2.5f)));
                 });
 
             AddRule(firstLayer.Rules, "more-grass",
@@ -122,7 +122,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "grass"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("grass", 0.5f));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(0.5f)));
                 });
 
             AddRule(firstLayer.Rules, "clump-grass",
@@ -130,7 +130,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "grass"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("grass", 1.5f));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(1.5f)));
                 });
 
             AddRule(firstLayer.Rules, "more-desert",
@@ -138,8 +138,8 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "desert"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("desert", 1.5f));
-                    list.Add(OutcomeTileType("dirt", 0.5f));
+                    list.Add(OutcomeTileType("desert", LiteralFloat(1.5f)));
+                    list.Add(OutcomeTileType("dirt", LiteralFloat(0.5f)));
                 });
 
             AddRule(firstLayer.Rules, "even-more-desert",
@@ -147,7 +147,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "desert"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("desert", 1.5f));
+                    list.Add(OutcomeTileType("desert", LiteralFloat(1.5f)));
                 });
 
             AddRule(firstLayer.Rules, "far-desert",
@@ -157,7 +157,7 @@ namespace UT_PathEarlScout
                     )
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("desert", 0.2f));
+                    list.Add(OutcomeTileType("desert", LiteralFloat(0.2f)));
                 });
 
             AddRule(firstLayer.Rules, "more-water",
@@ -165,7 +165,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "water"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("water", 1.5f));
+                    list.Add(OutcomeTileType("water", LiteralFloat(1.5f)));
                 });
 
             AddRule(firstLayer.Rules, "clump-water",
@@ -173,7 +173,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "water"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("water", 3.5f));
+                    list.Add(OutcomeTileType("water", LiteralFloat(3.5f)));
                 });
 
             AddRule(firstLayer.Rules, "flood-water",
@@ -181,7 +181,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "water"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("water", 3.5f));
+                    list.Add(OutcomeTileType("water", LiteralFloat(3.5f)));
                 });
 
             AddRule(firstLayer.Rules, "start-river",
@@ -189,7 +189,7 @@ namespace UT_PathEarlScout
                     IfCondition(CheckTileType("current", "water"))
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("river", 0.25f));
+                    list.Add(OutcomeTileType("river", LiteralFloat(0.25f)));
                 });
 
             AddRule(firstLayer.Rules, "shallows-beaches",
@@ -202,8 +202,8 @@ namespace UT_PathEarlScout
                     ));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileType("shallows", 0.5f));
-                    list.Add(OutcomeTileType("beach", 0.5f));
+                    list.Add(OutcomeTileType("shallows", LiteralFloat(0.5f)));
+                    list.Add(OutcomeTileType("beach", LiteralFloat(0.5f)));
                 });
 
             AddRule(firstLayer.Rules, "swamp-growth",
@@ -213,8 +213,8 @@ namespace UT_PathEarlScout
                     )
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("swamp", 0.5f));
-                    list.Add(OutcomeTileType("shallows", 0.1f));
+                    list.Add(OutcomeTileType("swamp", LiteralFloat(0.5f)));
+                    list.Add(OutcomeTileType("shallows", LiteralFloat(0.1f)));
                 });
 
             AddRule(firstLayer.Rules, "swamp-growth",
@@ -226,8 +226,8 @@ namespace UT_PathEarlScout
                     })
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("swamp", 1.5f));
-                    list.Add(OutcomeTileType("shallows", 0.5f));
+                    list.Add(OutcomeTileType("swamp", LiteralFloat(1.5f)));
+                    list.Add(OutcomeTileType("shallows", LiteralFloat(0.5f)));
                 });
 
             AddRule(firstLayer.Rules, "swamp-harden",
@@ -238,8 +238,8 @@ namespace UT_PathEarlScout
                     })
                 ),
                 (list) => {
-                    list.Add(OutcomeTileType("grass", 1.5f));
-                    list.Add(OutcomeTileType("dirt", 1.5f));
+                    list.Add(OutcomeTileType("grass", LiteralFloat(1.5f)));
+                    list.Add(OutcomeTileType("dirt", LiteralFloat(1.5f)));
                 });
 
             Layer<BasicTileInfo> riverLayer = Recycler.GetLayer();
@@ -260,7 +260,7 @@ namespace UT_PathEarlScout
                     ));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileType("river", 100f));
+                    list.Add(OutcomeTileType("river", LiteralFloat(100f)));
                 });
 
             Layer<BasicTileInfo> secondLayer = Recycler.GetLayer();
@@ -279,9 +279,9 @@ namespace UT_PathEarlScout
                     }));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileHeight("flat", 1f));
-                    list.Add(OutcomeTileHeight("hills", 0.3f));
-                    list.Add(OutcomeTileHeight("mountains", 0.1f));
+                    list.Add(OutcomeTileHeight("flat", LiteralFloat(1f)));
+                    list.Add(OutcomeTileHeight("hills", LiteralFloat(0.3f)));
+                    list.Add(OutcomeTileHeight("mountains", LiteralFloat(0.1f)));
                 });
 
             Layer<BasicTileInfo> thirdLayer = Recycler.GetLayer();
@@ -298,8 +298,8 @@ namespace UT_PathEarlScout
                     }));
                 }),
                 (list) => {
-                    list.Add(OutcomeTileFeature("empty", 1f));
-                    list.Add(OutcomeTileFeature("forest", 0.3f));
+                    list.Add(OutcomeTileFeature("empty", LiteralFloat(1f)));
+                    list.Add(OutcomeTileFeature("forest", LiteralFloat(0.3f)));
                 });
         }
 
@@ -411,6 +411,11 @@ namespace UT_PathEarlScout
             return key;
         }
 
+        private static KeywordFloat<BasicTileInfo> LiteralFloat(float f)
+        {
+            return KeywordFloat(null, null, f);
+        }
+
         private static KeywordInt<BasicTileInfo> KeywordInt(string owner, string keyword, int literal = 0, string nextop = null, KeywordInt<BasicTileInfo> next = null)
         {
             KeywordInt<BasicTileInfo> key = Recycler.KeywordIntPool.Request();
@@ -447,7 +452,7 @@ namespace UT_PathEarlScout
 
         private static Outcome<BasicTileInfo> Outcome(KeywordString<BasicTileInfo> keyword, string operation,
             KeywordFloat<BasicTileInfo> keywordFloat, KeywordString<BasicTileInfo> keywordString,
-            KeywordInt<BasicTileInfo> keywordInt, float probability = 1)
+            KeywordInt<BasicTileInfo> keywordInt, KeywordFloat<BasicTileInfo> probability = null)
         {
             Outcome<BasicTileInfo> outcome = Recycler.GetOutcome();
             outcome.Keyword = keyword;
@@ -459,22 +464,26 @@ namespace UT_PathEarlScout
             return outcome;
         }
 
-        private static Outcome<BasicTileInfo> OutcomeTileType(string type, float prob = 1)
+        private static Outcome<BasicTileInfo> OutcomeTileType(string type,
+            KeywordFloat<BasicTileInfo> prob = null)
         {
             return Outcome(KeywordString(null, null, "type"), "=", null, KeywordString(null, null, type), null, prob);
         }
 
-        private static Outcome<BasicTileInfo> OutcomeTileTypeByKeyword(string owner, string keyword, float prob = 1)
+        private static Outcome<BasicTileInfo> OutcomeTileTypeByKeyword(string owner,
+            string keyword, KeywordFloat<BasicTileInfo> prob = null)
         {
             return Outcome(KeywordString(null, null, "type"), "=", null, KeywordString(owner, keyword, null), null, prob);
         }
 
-        private static Outcome<BasicTileInfo> OutcomeTileFeature(string feature, float prob = 1)
+        private static Outcome<BasicTileInfo> OutcomeTileFeature(string feature,
+            KeywordFloat<BasicTileInfo> prob = null)
         {
             return Outcome(KeywordString(null, null, "feature"), "=", null, KeywordString(null, null, feature), null, prob);
         }
 
-        private static Outcome<BasicTileInfo> OutcomeTileHeight(string height, float prob = 1)
+        private static Outcome<BasicTileInfo> OutcomeTileHeight(string height,
+            KeywordFloat<BasicTileInfo> prob = null)
         {
             return Outcome(KeywordString(null, null, "height"), "=", null, KeywordString(null, null, height), null, prob);
         }

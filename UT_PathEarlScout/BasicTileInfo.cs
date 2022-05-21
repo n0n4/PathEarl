@@ -93,36 +93,36 @@ namespace UT_PathEarlScout
         }
 
         // accessors
-        public static Action<BasicTileInfo, string> SetTileType = (info, type) =>
+        public static Action<Tile<BasicTileInfo>, string> SetTileType = (tile, type) =>
         {
-            info.TileType = TileNameToType[type];
+            tile.Info.TileType = TileNameToType[type];
         };
-        public static Func<BasicTileInfo, string> GetTileType = (info) =>
+        public static Func<Tile<BasicTileInfo>, string> GetTileType = (tile) =>
         {
-            return TileTypeToName[info.TileType];
-        };
-
-        public static Action<BasicTileInfo, string> SetTileHeight = (info, type) =>
-        {
-            info.TileHeight = NameToHeight[type];
-        };
-        public static Func<BasicTileInfo, string> GetTileHeight = (info) =>
-        {
-            return HeightToName[info.TileHeight];
+            return TileTypeToName[tile.Info.TileType];
         };
 
-        public static Action<BasicTileInfo, string> SetTileFeature = (info, type) =>
+        public static Action<Tile<BasicTileInfo>, string> SetTileHeight = (tile, type) =>
         {
-            info.TileFeature = NameToFeature[type];
+            tile.Info.TileHeight = NameToHeight[type];
         };
-        public static Func<BasicTileInfo, string> GetTileFeature = (info) =>
+        public static Func<Tile<BasicTileInfo>, string> GetTileHeight = (tile) =>
         {
-            return FeatureToName[info.TileFeature];
+            return HeightToName[tile.Info.TileHeight];
         };
 
-        public static Func<BasicTileInfo, string> GetTileArchetype = (info) =>
+        public static Action<Tile<BasicTileInfo>, string> SetTileFeature = (tile, type) =>
         {
-            return TileTypeToArchetype[TileTypeToName[info.TileType]];
+            tile.Info.TileFeature = NameToFeature[type];
+        };
+        public static Func<Tile<BasicTileInfo>, string> GetTileFeature = (tile) =>
+        {
+            return FeatureToName[tile.Info.TileFeature];
+        };
+
+        public static Func<Tile<BasicTileInfo>, string> GetTileArchetype = (tile) =>
+        {
+            return TileTypeToArchetype[TileTypeToName[tile.Info.TileType]];
         };
     }
 }

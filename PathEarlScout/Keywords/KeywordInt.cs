@@ -10,7 +10,7 @@ namespace PathEarlScout.Keywords
     {
         public string KeywordOwner;
         public string Keyword;
-        public Func<T, int> Accessor;
+        public Func<Tile<T>, int> Accessor;
         public int Literal;
 
         public bool HasNext = false;
@@ -63,8 +63,8 @@ namespace PathEarlScout.Keywords
         {
             if (Accessor != null)
             {
-                T info = context.GetInfo(KeywordOwner);
-                return Accessor(info);
+                Tile<T> tile = context.GetTile(KeywordOwner);
+                return Accessor(tile);
             }
             return Literal;
         }

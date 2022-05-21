@@ -8,7 +8,7 @@ namespace PathEarlScout
 {
     public class Outcome<T> where T : ITileInfo
     {
-        public float Probability = 1f;
+        public KeywordFloat<T> Probability;
         public KeywordString<T> Keyword;
         public string Operation;
         public KeywordFloat<T> ValueFloat;
@@ -22,7 +22,11 @@ namespace PathEarlScout
 
         public void Clear(ScoutRecycler<T> recycler)
         {
-            Probability = 1f;
+            if (Probability != null)
+            {
+                recycler.KeywordFloatPool.Return(Probability);
+                Probability = null;
+            }
             if (Keyword != null)
             {
                 recycler.KeywordStringPool.Return(Keyword);

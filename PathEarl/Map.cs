@@ -22,6 +22,11 @@ namespace PathEarlCore
             InfoSpawner = infoSpawner;
         }
 
+        public Tile<T> GetTile(int id)
+        {
+            return new Tile<T>(this, id);
+        }
+
         public void Clear()
         {
             CurrentId = 0;

@@ -189,7 +189,7 @@ namespace PathEarlScout
 
             keywordReturn = new KeywordReturn<T>();
             InfoAccess<T> acc = serializer.Scout.InfoAccess;
-            if (acc.GetFloats.TryGetValue(keyword, out Func<T, float> floatFunc))
+            if (acc.GetFloats.TryGetValue(keyword, out Func<Tile<T>, float> floatFunc))
             {
                 KeywordFloat<T> key = serializer.Scout.Recycler.KeywordFloatPool.Request();
                 key.Accessor = floatFunc;
@@ -214,7 +214,7 @@ namespace PathEarlScout
                     }
                 }
             } 
-            else if (acc.GetInts.TryGetValue(keyword, out Func<T, int> intFunc))
+            else if (acc.GetInts.TryGetValue(keyword, out Func<Tile<T>, int> intFunc))
             {
                 KeywordInt<T> key = serializer.Scout.Recycler.KeywordIntPool.Request();
                 key.Accessor = intFunc;
@@ -239,7 +239,7 @@ namespace PathEarlScout
                     }
                 }
             }
-            else if (acc.GetStrings.TryGetValue(keyword, out Func<T, string> stringFunc))
+            else if (acc.GetStrings.TryGetValue(keyword, out Func<Tile<T>, string> stringFunc))
             {
                 KeywordString<T> key = serializer.Scout.Recycler.KeywordStringPool.Request();
                 key.Accessor = stringFunc;
@@ -301,7 +301,7 @@ namespace PathEarlScout
                     key.KeywordOwner = null;
                     key.Accessor = null;
                     key.Keyword = null;
-                    if (!float.TryParse(keyword, out float keyValue))
+                    if (!float.TryParse(keyword.Substring(0, keyword.Length - 1), out float keyValue))
                     {
                         throw new Exception("Could not parse '" + keyword + "' as float");
                     }

@@ -9,8 +9,7 @@ namespace PathEarlScout.Keywords
     public class KeywordContext<T> : IPoolable where T : ITileInfo
     {
         public Map<T> Map;
-        public int[] Ids = new int[32];
-        public T[] Infos = new T[32];
+        public Tile<T>[] Tiles = new Tile<T>[32];
         public int Count = 0;
 
         public List<int> AlreadyHitIds = new List<int>();
@@ -19,21 +18,20 @@ namespace PathEarlScout.Keywords
 
         private int PoolIndex;
 
-        public void Setup(Map<T> map, int thisId, T thisInfo)
+        public Tile<T> Setup(Map<T> map, int thisId)
         {
             Map = map;
-            Ids[0] = thisId;
-            Infos[0] = thisInfo;
+            Tiles[0] = map.GetTile(thisId);
             Count = 1;
             AlreadyHitCount = 0;
+            return Tiles[0];
         }
 
-        public void Add(int id, T info)
+        public void Add(int id)
         {
-            if (Count >= Ids.Length)
+            if (Count >= Tiles.Length)
                 throw new Exception("Stack size too large!");
-            Ids[Count] = id;
-            Infos[Count] = info;
+            Tiles[Count] = Map.GetTile(id);
             Count++;
         }
 
@@ -105,14 +103,9 @@ namespace PathEarlScout.Keywords
             throw new Exception("Unrecognized keyword owner '" + owner + "'");
         }
 
-        public T GetInfo(string owner)
+        public Tile<T> GetTile(string owner)
         {
-            return Infos[GetIndex(owner)];
-        }
-
-        public int GetId(string owner)
-        {
-            return Ids[GetIndex(owner)];
+            return Tiles[GetIndex(owner)];
         }
 
         public void Clear()

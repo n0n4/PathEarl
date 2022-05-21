@@ -27,6 +27,7 @@ namespace PathEarlScout
 
             Recycler = recycler;
             InfoAccess = infoAccess;
+            InfoAccess.Map = map;
 
             GlobalRules = recycler.GetRuleList();
             Layers = recycler.GetLayerList();

@@ -341,14 +341,14 @@ namespace PathEarlScout
             else
                 throw new Exception("Expected value from outcome at line " + LineCount);
 
-            if (outcome.Probability == 1f)
+            if (outcome.Probability == null)
             {
                 WriteLine("");
             }
             else
             {
                 Write(" (");
-                Write(outcome.Probability.ToString());
+                ScoutScript<T>.SaveKeywordFloat(this, outcome.Probability);
                 WriteLine(")");
             }
         }
@@ -371,7 +371,7 @@ namespace PathEarlScout
             outcome.ValueInt = keywordReturn.KeywordInt;
             outcome.ValueString = keywordReturn.KeywordString;
 
-            float prob = 1;
+            outcome.Probability = null;
             while (start < LastLine.Length && LastLine[start] != '(')
                 start++;
             if (start < LastLine.Length)
@@ -380,11 +380,11 @@ namespace PathEarlScout
                 string probText = ParseHelper.ReadToken(LastLine, ')', start);
                 if (!string.IsNullOrEmpty(probText))
                 {
-                    if (float.TryParse(probText, out float newProb))
-                        prob = newProb;
+                    ScoutScript<T>.LoadKeyword(this, probText, 0, out keywordReturn);
+                    if (keywordReturn.KeywordFloat != null)
+                        outcome.Probability = keywordReturn.KeywordFloat;
                 }
             }
-            outcome.Probability = prob;
         }
     }
 }

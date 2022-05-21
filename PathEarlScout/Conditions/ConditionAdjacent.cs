@@ -41,7 +41,8 @@ namespace PathEarlScout.Conditions
             SearchDict.Clear();
 
             context.AddAlreadyHitStack();
-            int id = context.Ids[context.Count - 1];
+            Tile<T> tile = context.Tiles[context.Count - 1];
+            int id = tile.Id;
 
             int count = 0;
             foreach (var conn in context.Map.Nodes[id])
@@ -75,7 +76,7 @@ namespace PathEarlScout.Conditions
                 if (connRange < StartRange || connRange > StopRange)
                     continue;
 
-                context.Add(connId, context.Map.Info[connId]);
+                context.Add(connId);
                 if (Condition.Evaluate(context))
                     count++;
                 context.Remove();
