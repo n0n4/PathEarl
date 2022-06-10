@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UT_PathEarlScout.TestScouts;
 
 namespace UT_PathEarlScout
 {
@@ -34,7 +35,9 @@ namespace UT_PathEarlScout
 
         public void AssertOutcomesAreEqual(Outcome<BasicTileInfo> a, Outcome<BasicTileInfo> b)
         {
-            AssertKeywordStringsAreEqual(a.Keyword, b.Keyword);
+            AssertKeywordFloatsAreEqual(a.KeywordFloat, b.KeywordFloat);
+            AssertKeywordIntsAreEqual(a.KeywordInt, b.KeywordInt);
+            AssertKeywordStringsAreEqual(a.KeywordString, b.KeywordString);
             Assert.AreEqual(a.Operation, b.Operation);
             AssertKeywordFloatsAreEqual(a.ValueFloat, b.ValueFloat);
             AssertKeywordIntsAreEqual(a.ValueInt, b.ValueInt);
@@ -118,8 +121,8 @@ namespace UT_PathEarlScout
                 return;
             Assert.IsNotNull(a);
             Assert.IsNotNull(b);
-            Assert.AreEqual(a.KeywordOwner, b.KeywordOwner);
-            Assert.AreEqual(a.Keyword, b.Keyword);
+            AssertKeywordStringsAreEqual(a.KeywordOwner, b.KeywordOwner);
+            AssertKeywordStringsAreEqual(a.Keyword, b.Keyword);
             Assert.AreEqual(a.Literal, b.Literal);
             Assert.AreEqual(a.HasNext, b.HasNext);
             if (a.HasNext)
@@ -137,8 +140,8 @@ namespace UT_PathEarlScout
                 return;
             Assert.IsNotNull(a);
             Assert.IsNotNull(b);
-            Assert.AreEqual(a.KeywordOwner, b.KeywordOwner);
-            Assert.AreEqual(a.Keyword, b.Keyword);
+            AssertKeywordStringsAreEqual(a.KeywordOwner, b.KeywordOwner);
+            AssertKeywordStringsAreEqual(a.Keyword, b.Keyword);
             Assert.AreEqual(a.Literal, b.Literal);
             Assert.AreEqual(a.HasNext, b.HasNext);
             if (a.HasNext)
@@ -156,8 +159,8 @@ namespace UT_PathEarlScout
                 return;
             Assert.IsNotNull(a);
             Assert.IsNotNull(b);
-            Assert.AreEqual(a.KeywordOwner, b.KeywordOwner);
-            Assert.AreEqual(a.Keyword, b.Keyword);
+            AssertKeywordStringsAreEqual(a.KeywordOwner, b.KeywordOwner);
+            AssertKeywordStringsAreEqual(a.Keyword, b.Keyword);
             Assert.AreEqual(a.Literal, b.Literal);
             Assert.AreEqual(a.HasNext, b.HasNext);
             if (a.HasNext)
@@ -169,18 +172,25 @@ namespace UT_PathEarlScout
             }
         }
 
-        [TestMethod]
-        public void SaveLoadTest()
+        public void AssertLayersAreEqual(Layer<BasicTileInfo> a, Layer<BasicTileInfo> b)
+        {
+            Assert.AreEqual(a.Name, b.Name);
+            AssertRulesListAreEqual(a.AutoRules, b.AutoRules);
+            AssertRulesListAreEqual(a.GlobalRules, b.GlobalRules);
+            AssertRulesListAreEqual(a.Rules, b.Rules);
+        }
+
+        public static Scout<BasicTileInfo> SaveLoad(string name, Action<Scout<BasicTileInfo>> setup, out Scout<BasicTileInfo> scout)
         {
             Map<BasicTileInfo> map = BasicScout.MakeHexMap(50, 50, out BasicTileInfo[,] infos);
-            Scout<BasicTileInfo> scout = BasicScout.MakeScout(map, "basic-scout");
-            BasicScout.AddBasicScoutRules(scout);
+            scout = BasicScout.MakeScout(map, "basic-scout");
+            setup(scout);
 
             ScoutSerializer<BasicTileInfo> serializer = new ScoutSerializer<BasicTileInfo>();
 
-            using (var fileStream = new FileStream("SaveLoadText.txt", FileMode.Create)) 
+            using (var fileStream = new FileStream(name + "-save-load-test.txt", FileMode.Create))
             {
-                using (var streamWriter = new StreamWriter(fileStream)) 
+                using (var streamWriter = new StreamWriter(fileStream))
                 {
                     serializer.Save(scout, streamWriter);
                 }
@@ -189,7 +199,7 @@ namespace UT_PathEarlScout
             // now try loading
             Scout<BasicTileInfo> loadScout = BasicScout.MakeScout(map, "load-scout");
 
-            using (var fileStream = new FileStream("SaveLoadText.txt", FileMode.Open))
+            using (var fileStream = new FileStream(name + "-save-load-test.txt", FileMode.Open))
             {
                 using (var streamReader = new StreamReader(fileStream))
                 {
@@ -197,20 +207,53 @@ namespace UT_PathEarlScout
                 }
             }
 
+            return loadScout;
+        }
+
+        public void SaveLoadTest(string name, Action<Scout<BasicTileInfo>> setup)
+        {
+            Scout<BasicTileInfo> loadScout = SaveLoad(name, setup, out Scout<BasicTileInfo> scout);
+
             // are they equal?
             Assert.AreEqual(scout.Name, loadScout.Name);
             Assert.AreEqual(scout.Optimizer.GetKeyword(), loadScout.Optimizer.GetKeyword());
 
-            AssertRulesListAreEqual(scout.GlobalRules, loadScout.GlobalRules);
+            AssertLayersAreEqual(scout.GlobalLayer, loadScout.GlobalLayer);
 
             Assert.AreEqual(scout.Layers.Count, loadScout.Layers.Count);
             for (int i = 0; i < scout.Layers.Count; i++)
             {
                 Layer<BasicTileInfo> la = scout.Layers[i];
                 Layer<BasicTileInfo> lb = loadScout.Layers[i];
-                Assert.AreEqual(la.Name, lb.Name);
-                AssertRulesListAreEqual(la.Rules, lb.Rules);
+                AssertLayersAreEqual(la, lb);
             }
+        }
+
+        [TestMethod]
+        public void StandardMap_SaveLoadTest()
+        {
+            SaveLoadTest("standard-map", (scout) =>
+            {
+                StandardMapScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void GlobalVar_SaveLoadTest()
+        {
+            SaveLoadTest("global-var", (scout) =>
+            {
+                GlobalVarScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void DynamicBracket_SaveLoadTest()
+        {
+            SaveLoadTest("dynamic-bracket", (scout) =>
+            {
+                DynamicBracketScout.AddRules(scout);
+            });
         }
     }
 }

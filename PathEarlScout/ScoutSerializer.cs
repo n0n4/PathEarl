@@ -64,7 +64,7 @@ namespace PathEarlScout
                 }
                 else if (lowered.StartsWith("global"))
                 {
-                    LoadRuleList(scout.GlobalRules);
+                    LoadLayer(scout.GlobalLayer, "GLOBAL");
                 } 
                 else if (lowered.StartsWith("layers"))
                 {
@@ -92,7 +92,7 @@ namespace PathEarlScout
             }
 
             WriteLine("GLOBAL");
-            SaveRuleList(scout.GlobalRules);
+            SaveLayer(scout.GlobalLayer, "GLOBAL");
 
             WriteLine("LAYERS");
             SaveLayerList(scout.Layers);
@@ -165,28 +165,49 @@ namespace PathEarlScout
             }
         }
 
-        public void SaveLayer(Layer<T> layer)
+        public void SaveLayer(Layer<T> layer, string givenName = null)
         {
-            Write("LAYER ");
-            WriteLine(layer.Name);
+            if (givenName == null)
+            {
+                Write("LAYER ");
+                WriteLine(layer.Name);
+            }
+
             TabLevel++;
             if (layer.Repeats != 0)
             {
                 Write("REPEATS ");
                 WriteLine(layer.Repeats.ToString());
             }
+            if (layer.GlobalRules.Count > 0)
+            {
+                WriteLine("GLOBAL");
+                SaveRuleList(layer.GlobalRules);
+            }
+            if (layer.AutoRules.Count > 0)
+            {
+                WriteLine("AUTO");
+                SaveRuleList(layer.AutoRules);
+            }
             TabLevel--;
             SaveRuleList(layer.Rules);
         }
 
-        public void LoadLayer(Layer<T> layer)
+        public void LoadLayer(Layer<T> layer, string givenName = null)
         {
-            string layerName = string.Empty;
-            if (!TryReadLine())
-                throw new Exception("Expected Layer at line " + LineCount);
-            if (LastLine.Length > 6)
-                layerName = LastLine.Substring(6).Trim();
-            layer.Name = layerName;
+            if (givenName == null)
+            {
+                string layerName = string.Empty;
+                if (!TryReadLine())
+                    throw new Exception("Expected Layer at line " + LineCount);
+                if (LastLine.Length > 6)
+                    layerName = LastLine.Substring(6).Trim();
+                layer.Name = layerName;
+            }
+            else
+            {
+                layer.Name = givenName;
+            }
 
             TabLevel++;
             while (TryReadLine())
@@ -197,6 +218,14 @@ namespace PathEarlScout
                     string repeatText = LastLine.Substring(8);
                     if (!int.TryParse(repeatText, out layer.Repeats))
                         throw new Exception("Failed to convert '" + repeatText + "' to int at line " + LineCount);
+                }
+                else if (lowered.StartsWith("global"))
+                {
+                    LoadRuleList(layer.GlobalRules);
+                }
+                else if (lowered.StartsWith("auto"))
+                {
+                    LoadRuleList(layer.AutoRules);
                 }
                 else
                 {
@@ -328,8 +357,16 @@ namespace PathEarlScout
         public void SaveOutcome(Outcome<T> outcome)
         {
             Write("* ");
-            ScoutScript<T>.SaveKeywordString(this, outcome.Keyword);
-            Write(" ");
+            if (outcome.KeywordFloat != null)
+                ScoutScript<T>.SaveKeywordFloat(this, outcome.KeywordFloat);
+            else if (outcome.KeywordInt != null)
+                ScoutScript<T>.SaveKeywordInt(this, outcome.KeywordInt);
+            else if (outcome.KeywordString != null)
+                ScoutScript<T>.SaveKeywordString(this, outcome.KeywordString);
+            else
+                throw new Exception("Expected keyword from outcome at line " + LineCount);
+
+            Write(" :");
             Write(outcome.Operation);
             Write(" ");
             if (outcome.ValueFloat != null)
@@ -359,14 +396,22 @@ namespace PathEarlScout
             if (!LastLine.StartsWith("* "))
                 throw new Exception("Expected Outcome at line " + LineCount);
 
-            int start = ScoutScript<T>.LoadKeyword(this, LastLine, 2, out KeywordReturn<T> keywordReturn);
-            outcome.Keyword = keywordReturn.KeywordString;
+            int colonPos = LastLine.IndexOf(':');
+            if (colonPos == -1)
+                throw new Exception("Expected : in Outcome at line " + LineCount);
 
-            string operation = ParseHelper.ReadToken(LastLine, ' ', start);
-            start += operation.Length + 1;
+            string firstHalf = LastLine.Substring(2, colonPos);
+            string operation = ParseHelper.ReadToken(LastLine, ' ', colonPos + 1);
+            int start = ParseHelper.SkipSpaces(LastLine, colonPos + 1 + operation.Length);
+
+            ScoutScript<T>.LoadKeyword(this, firstHalf, 0, out KeywordReturn<T> keywordReturn);
+            outcome.KeywordFloat = keywordReturn.KeywordFloat;
+            outcome.KeywordInt = keywordReturn.KeywordInt;
+            outcome.KeywordString = keywordReturn.KeywordString;
+
             outcome.Operation = operation;
 
-            start = ScoutScript<T>.LoadKeyword(this, LastLine, start, out keywordReturn);
+            ScoutScript<T>.LoadKeyword(this, LastLine, start, out keywordReturn);
             outcome.ValueFloat = keywordReturn.KeywordFloat;
             outcome.ValueInt = keywordReturn.KeywordInt;
             outcome.ValueString = keywordReturn.KeywordString;

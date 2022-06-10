@@ -9,6 +9,7 @@ namespace PathEarlScout.Keywords
     public class KeywordContext<T> : IPoolable where T : ITileInfo
     {
         public Map<T> Map;
+        public InfoAccess<T> InfoAccess;
         public Tile<T>[] Tiles = new Tile<T>[32];
         public int Count = 0;
 
@@ -18,9 +19,10 @@ namespace PathEarlScout.Keywords
 
         private int PoolIndex;
 
-        public Tile<T> Setup(Map<T> map, int thisId)
+        public Tile<T> Setup(Map<T> map, InfoAccess<T> infoAccess, int thisId)
         {
             Map = map;
+            InfoAccess = infoAccess;
             Tiles[0] = map.GetTile(thisId);
             Count = 1;
             AlreadyHitCount = 0;
@@ -80,7 +82,10 @@ namespace PathEarlScout.Keywords
 
         public int GetIndex(string owner)
         {
-            if (owner == "root")
+            // note: as a special case, our global vars (ints/strings/floats) apply
+            // to the root tile. This should never matter, since global vars don't
+            // go through the tile anyways, so it's just a placeholder.
+            if (owner == "root" || owner == "ints" || owner == "strings" || owner == "floats")
                 return 0;
             else if (owner == "current")
                 return Count - 1;

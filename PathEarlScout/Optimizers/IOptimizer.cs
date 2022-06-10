@@ -9,6 +9,6 @@ namespace PathEarlScout.Optimizers
     {
         string GetKeyword();
         void SetSeed(int seed);
-        void RunLayer(Scout<T> scout, Layer<T> layer, List<Rule<T>> globals);
+        void RunLayer(Scout<T> scout, Layer<T> layer, Layer<T> global);
     }
 }

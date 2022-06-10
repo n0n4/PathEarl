@@ -24,6 +24,8 @@ namespace PathEarlScout.Conditions
                     return new ConditionAdjacent<T>(recycler);
                 case ConditionIf<T>.Keyword:
                     return new ConditionIf<T>(recycler);
+                case ConditionAlways<T>.Keyword:
+                    return new ConditionAlways<T>(recycler);
                 default:
                     break;
             }

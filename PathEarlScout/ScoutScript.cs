@@ -56,23 +56,52 @@ namespace PathEarlScout
 
         public static void SaveKeywordFloat(ScoutSerializer<T> serializer, KeywordFloat<T> keyword)
         {
-            if (string.IsNullOrEmpty(keyword.KeywordOwner))
+            if (keyword.KeywordOwner == null)
             {
-                if (string.IsNullOrEmpty(keyword.Keyword))
+                if (keyword.Keyword == null)
                 {
                     serializer.Write(keyword.Literal.ToString());
                     serializer.Write("f");
                 }
                 else
                 {
-                    serializer.Write(keyword.Keyword);
+                    if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                    {
+                        serializer.Write("<float:");
+                        SaveKeywordString(serializer, keyword.Keyword);
+                        serializer.Write(">");
+                    } 
+                    else
+                    {
+                        SaveKeywordString(serializer, keyword.Keyword, true);
+                    }
                 }
             }
             else
             {
-                serializer.Write(keyword.KeywordOwner);
+                if (string.IsNullOrEmpty(keyword.KeywordOwner.Literal) || keyword.KeywordOwner.HasNext)
+                {
+                    serializer.Write("<float:");
+                    SaveKeywordString(serializer, keyword.KeywordOwner);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.KeywordOwner, true);
+                }
+
                 serializer.Write(".");
-                serializer.Write(keyword.Keyword);
+
+                if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                {
+                    serializer.Write("<float:");
+                    SaveKeywordString(serializer, keyword.Keyword);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.Keyword, true);
+                }
             }
 
             if (keyword.HasNext)
@@ -94,22 +123,51 @@ namespace PathEarlScout
 
         public static void SaveKeywordInt(ScoutSerializer<T> serializer, KeywordInt<T> keyword)
         {
-            if (string.IsNullOrEmpty(keyword.KeywordOwner))
+            if (keyword.KeywordOwner == null)
             {
-                if (string.IsNullOrEmpty(keyword.Keyword))
+                if (keyword.Keyword == null)
                 {
                     serializer.Write(keyword.Literal.ToString());
                 }
                 else
                 {
-                    serializer.Write(keyword.Keyword);
+                    if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                    {
+                        serializer.Write("<int:");
+                        SaveKeywordString(serializer, keyword.Keyword);
+                        serializer.Write(">");
+                    }
+                    else
+                    {
+                        SaveKeywordString(serializer, keyword.Keyword, true);
+                    }
                 }
             }
             else
             {
-                serializer.Write(keyword.KeywordOwner);
+                if (string.IsNullOrEmpty(keyword.KeywordOwner.Literal) || keyword.KeywordOwner.HasNext)
+                {
+                    serializer.Write("<int:");
+                    SaveKeywordString(serializer, keyword.KeywordOwner);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.KeywordOwner, true);
+                }
+
                 serializer.Write(".");
-                serializer.Write(keyword.Keyword);
+
+                if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                {
+                    serializer.Write("<int:");
+                    SaveKeywordString(serializer, keyword.Keyword);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.Keyword, true);
+                }
             }
 
             if (keyword.HasNext)
@@ -129,27 +187,57 @@ namespace PathEarlScout
             }
         }
 
-        public static void SaveKeywordString(ScoutSerializer<T> serializer, KeywordString<T> keyword)
+        public static void SaveKeywordString(ScoutSerializer<T> serializer, KeywordString<T> keyword, bool noQuotes = false)
         {
-            if (string.IsNullOrEmpty(keyword.KeywordOwner))
+            if (keyword.KeywordOwner == null)
             {
-                if (string.IsNullOrEmpty(keyword.Keyword))
+                if (keyword.Keyword == null)
                 {
-                    serializer.Write("\"");
+                    if (!noQuotes)
+                        serializer.Write("\"");
                     serializer.Write(keyword.Literal);
-                    serializer.Write("\"");
+                    if (!noQuotes)
+                        serializer.Write("\"");
                 }
                 else
                 {
-
-                    serializer.Write(keyword.Keyword);
+                    if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                    {
+                        serializer.Write("<string:");
+                        SaveKeywordString(serializer, keyword.Keyword);
+                        serializer.Write(">");
+                    }
+                    else
+                    {
+                        SaveKeywordString(serializer, keyword.Keyword, true);
+                    }
                 }
             }
             else
             {
-                serializer.Write(keyword.KeywordOwner);
+                if (string.IsNullOrEmpty(keyword.KeywordOwner.Literal) || keyword.KeywordOwner.HasNext)
+                {
+                    serializer.Write("<string:");
+                    SaveKeywordString(serializer, keyword.KeywordOwner);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.KeywordOwner, true);
+                }
+
                 serializer.Write(".");
-                serializer.Write(keyword.Keyword);
+
+                if (string.IsNullOrEmpty(keyword.Keyword.Literal) || keyword.Keyword.HasNext)
+                {
+                    serializer.Write("<string:");
+                    SaveKeywordString(serializer, keyword.Keyword);
+                    serializer.Write(">");
+                }
+                else
+                {
+                    SaveKeywordString(serializer, keyword.Keyword, true);
+                }
             }
 
             if (keyword.HasNext)
@@ -166,103 +254,161 @@ namespace PathEarlScout
                     SaveKeywordString(serializer, keyword.NextString);
                 else
                     throw new Exception("Expected next keyword after " + keyword.ToString());
+            }
+        }
+
+        public static KeywordString<T> LoadKeywordName(ScoutSerializer<T> serializer, string line)
+        {
+            int pos = ParseHelper.SkipSpaces(line, 0);
+            if (line[pos] == '<')
+            {
+                // load bracketed token
+                int lastPos = ParseHelper.FindLastNonSpace(line);
+                if (line[lastPos] != '>')
+                    throw new Exception("Expected ending > on line " + line);
+                string bracketed = line.Substring(pos + 1, lastPos - (1 + pos));
+
+                // read the type prefix
+                int colonPos = bracketed.IndexOf(':');
+                if (colonPos == -1)
+                    throw new Exception("Expected type prefix on line " + line);
+
+                LoadKeyword(serializer, bracketed, colonPos + 1, out KeywordReturn<T> keywordReturn);
+                if (keywordReturn.KeywordString == null)
+                    throw new Exception("Failed to parse " + bracketed + " as keyword string");
+
+                if (bracketed.StartsWith("int"))
+                    keywordReturn.KeywordString.PrefixType = EKeywordType.Int;
+                else if (bracketed.StartsWith("string"))
+                    keywordReturn.KeywordString.PrefixType = EKeywordType.String;
+                else if (bracketed.StartsWith("float"))
+                    keywordReturn.KeywordString.PrefixType = EKeywordType.Float;
+                else
+                    throw new Exception("Unrecognized type prefix on line " + line);
+
+                return keywordReturn.KeywordString;
+            }
+            else
+            {
+                // load as a literal
+                KeywordString<T> key = serializer.Scout.Recycler.KeywordStringPool.Request();
+                
+                key.Literal = line;
+                key.KeywordOwner = null;
+                key.Accessor = null;
+                key.Keyword = null;
+                key.HasNext = false;
+
+                return key;
             }
         }
 
         public static int LoadKeyword(ScoutSerializer<T> serializer, string line, int pos, out KeywordReturn<T> keywordReturn)
         {
-            string full = ParseHelper.ReadTokenIgnoreQuotes(line, ' ', pos);
+            string full = ParseHelper.ReadTokenIgnoreBrackets(line, ' ', pos);
             pos += full.Length;
 
             string owner = null;
             string keyword = null;
-            int dotPos = full.IndexOf('.');
-            if (dotPos != -1)
+            KeywordString<T> ownerKeyword = null;
+            KeywordString<T> keywordKeyword = null;
+            int dotPos = ParseHelper.IndexOfIgnoreBrackets(full, 0, '.');
+            int firstPos = ParseHelper.SkipSpaces(full, 0);
+            if (dotPos != -1 && !char.IsDigit(full[firstPos]) && full[firstPos] != '-' && full[firstPos] != '.')
             {
-                owner = ParseHelper.ReadToken(full, '.', 0);
+                owner = full.Substring(0, dotPos);
                 keyword = full.Substring(dotPos + 1);
+
+                ownerKeyword = LoadKeywordName(serializer, owner);
+                keywordKeyword = LoadKeywordName(serializer, keyword);
             }
             else
             {
                 keyword = full;
+
+                keywordKeyword = LoadKeywordName(serializer, keyword);
             }
 
             keywordReturn = new KeywordReturn<T>();
             InfoAccess<T> acc = serializer.Scout.InfoAccess;
-            if (acc.GetFloats.TryGetValue(keyword, out Func<Tile<T>, float> floatFunc))
+            if (keywordKeyword != null && keywordKeyword.PrefixType != EKeywordType.None)
+            {
+                // in this case, it's a bracketed dynamic lookup
+                // we use the prefix to determine what kind of keyword we are constructing
+                if (keywordKeyword.PrefixType == EKeywordType.Int)
+                {
+                    KeywordInt<T> key = serializer.Scout.Recycler.KeywordIntPool.Request();
+                    key.Accessor = null;
+                    key.Keyword = keywordKeyword;
+                    key.KeywordOwner = ownerKeyword;
+                    key.HasNext = false;
+                    keywordReturn.KeywordInt = key;
+
+                    // check for a subsequent keyword
+                    pos = CheckIntHasNext(key, serializer, line, pos);
+                }
+                else if (keywordKeyword.PrefixType == EKeywordType.String)
+                {
+                    KeywordString<T> key = serializer.Scout.Recycler.KeywordStringPool.Request();
+                    key.Accessor = null;
+                    key.Keyword = keywordKeyword;
+                    key.KeywordOwner = ownerKeyword;
+                    key.HasNext = false;
+                    keywordReturn.KeywordString = key;
+
+                    // check for a subsequent keyword
+                    pos = CheckStringHasNext(key, serializer, line, pos);
+                }
+                else if (keywordKeyword.PrefixType == EKeywordType.Float)
+                {
+                    KeywordFloat<T> key = serializer.Scout.Recycler.KeywordFloatPool.Request();
+                    key.Accessor = null;
+                    key.Keyword = keywordKeyword;
+                    key.KeywordOwner = ownerKeyword;
+                    key.HasNext = false;
+                    keywordReturn.KeywordFloat = key;
+
+                    // check for a subsequent keyword
+                    pos = CheckFloatHasNext(key, serializer, line, pos);
+                }
+                else
+                    throw new Exception("Unrecognized type prefix in keyword load");
+            }
+            else if (acc.TryGetFloatGet(owner, keyword, out Func<Tile<T>, float> floatFunc))
             {
                 KeywordFloat<T> key = serializer.Scout.Recycler.KeywordFloatPool.Request();
                 key.Accessor = floatFunc;
-                key.Keyword = keyword;
-                key.KeywordOwner = owner;
+                key.Keyword = keywordKeyword;
+                key.KeywordOwner = ownerKeyword;
                 key.HasNext = false;
                 keywordReturn.KeywordFloat = key;
 
                 // check for a subsequent keyword
-                if (line.Length > pos)
-                {
-                    pos = ParseHelper.SkipSpaces(line, pos);
-                    string operation = ParseHelper.ReadToken(line, ' ', pos);
-                    if (KeywordHelper<T>.FloatCombinations.Contains(operation))
-                    {
-                        key.HasNext = true;
-                        key.NextOperation = operation;
-                        pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                        key.NextFloat = nextReturn.KeywordFloat;
-                        key.NextInt = nextReturn.KeywordInt;
-                        key.NextString = nextReturn.KeywordString;
-                    }
-                }
+                pos = CheckFloatHasNext(key, serializer, line, pos);
             } 
-            else if (acc.GetInts.TryGetValue(keyword, out Func<Tile<T>, int> intFunc))
+            else if (acc.TryGetIntGet(owner, keyword, out Func<Tile<T>, int> intFunc))
             {
                 KeywordInt<T> key = serializer.Scout.Recycler.KeywordIntPool.Request();
                 key.Accessor = intFunc;
-                key.Keyword = keyword;
-                key.KeywordOwner = owner;
+                key.Keyword = keywordKeyword;
+                key.KeywordOwner = ownerKeyword;
                 key.HasNext = false;
                 keywordReturn.KeywordInt = key;
 
                 // check for a subsequent keyword
-                if (line.Length > pos)
-                {
-                    pos = ParseHelper.SkipSpaces(line, pos);
-                    string operation = ParseHelper.ReadToken(line, ' ', pos);
-                    if (KeywordHelper<T>.IntCombinations.Contains(operation))
-                    {
-                        key.HasNext = true;
-                        key.NextOperation = operation;
-                        pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                        key.NextFloat = nextReturn.KeywordFloat;
-                        key.NextInt = nextReturn.KeywordInt;
-                        key.NextString = nextReturn.KeywordString;
-                    }
-                }
+                pos = CheckIntHasNext(key, serializer, line, pos);
             }
-            else if (acc.GetStrings.TryGetValue(keyword, out Func<Tile<T>, string> stringFunc))
+            else if (acc.TryGetStringGet(owner, keyword, out Func<Tile<T>, string> stringFunc))
             {
                 KeywordString<T> key = serializer.Scout.Recycler.KeywordStringPool.Request();
                 key.Accessor = stringFunc;
-                key.Keyword = keyword;
-                key.KeywordOwner = owner;
+                key.Keyword = keywordKeyword;
+                key.KeywordOwner = ownerKeyword;
                 key.HasNext = false;
                 keywordReturn.KeywordString = key;
 
                 // check for a subsequent keyword
-                if (line.Length > pos)
-                {
-                    pos = ParseHelper.SkipSpaces(line, pos);
-                    string operation = ParseHelper.ReadToken(line, ' ', pos);
-                    if (KeywordHelper<T>.StringCombinations.Contains(operation))
-                    {
-                        key.HasNext = true;
-                        key.NextOperation = operation;
-                        pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                        key.NextFloat = nextReturn.KeywordFloat;
-                        key.NextInt = nextReturn.KeywordInt;
-                        key.NextString = nextReturn.KeywordString;
-                    }
-                }
+                pos = CheckStringHasNext(key, serializer, line, pos);
             }
             else
             {
@@ -279,20 +425,7 @@ namespace PathEarlScout
                     keywordReturn.KeywordString = key;
 
                     // check for a subsequent keyword
-                    if (line.Length > pos)
-                    {
-                        pos = ParseHelper.SkipSpaces(line, pos);
-                        string operation = ParseHelper.ReadToken(line, ' ', pos);
-                        if (KeywordHelper<T>.StringCombinations.Contains(operation))
-                        {
-                            key.HasNext = true;
-                            key.NextOperation = operation;
-                            pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                            key.NextFloat = nextReturn.KeywordFloat;
-                            key.NextInt = nextReturn.KeywordInt;
-                            key.NextString = nextReturn.KeywordString;
-                        }
-                    }
+                    pos = CheckStringHasNext(key, serializer, line, pos);
                 }
                 else if (keyword.EndsWith("f"))
                 {
@@ -310,20 +443,7 @@ namespace PathEarlScout
                     keywordReturn.KeywordFloat = key;
 
                     // check for a subsequent keyword
-                    if (line.Length > pos)
-                    {
-                        pos = ParseHelper.SkipSpaces(line, pos);
-                        string operation = ParseHelper.ReadToken(line, ' ', pos);
-                        if (KeywordHelper<T>.FloatCombinations.Contains(operation))
-                        {
-                            key.HasNext = true;
-                            key.NextOperation = operation;
-                            pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                            key.NextFloat = nextReturn.KeywordFloat;
-                            key.NextInt = nextReturn.KeywordInt;
-                            key.NextString = nextReturn.KeywordString;
-                        }
-                    }
+                    pos = CheckFloatHasNext(key, serializer, line, pos);
                 }
                 else
                 {
@@ -341,23 +461,76 @@ namespace PathEarlScout
                     keywordReturn.KeywordInt = key;
 
                     // check for a subsequent keyword
-                    if (line.Length > pos)
-                    {
-                        pos = ParseHelper.SkipSpaces(line, pos);
-                        string operation = ParseHelper.ReadToken(line, ' ', pos);
-                        if (KeywordHelper<T>.IntCombinations.Contains(operation))
-                        {
-                            key.HasNext = true;
-                            key.NextOperation = operation;
-                            pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
-                            key.NextFloat = nextReturn.KeywordFloat;
-                            key.NextInt = nextReturn.KeywordInt;
-                            key.NextString = nextReturn.KeywordString;
-                        }
-                    }
+                    pos = CheckIntHasNext(key, serializer, line, pos);
                 }
             }
 
+            return pos;
+        }
+
+        private static int CheckIntHasNext(KeywordInt<T> key, ScoutSerializer<T> serializer, string line, int pos)
+        {
+            if (line.Length > pos)
+            {
+                pos = ParseHelper.SkipSpaces(line, pos);
+                string operation = ParseHelper.ReadToken(line, ' ', pos);
+                if (KeywordHelper<T>.IntCombinations.Contains(operation))
+                {
+                    pos += operation.Length;
+                    pos = ParseHelper.SkipSpaces(line, pos);
+
+                    key.HasNext = true;
+                    key.NextOperation = operation;
+                    pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
+                    key.NextFloat = nextReturn.KeywordFloat;
+                    key.NextInt = nextReturn.KeywordInt;
+                    key.NextString = nextReturn.KeywordString;
+                }
+            }
+            return pos;
+        }
+
+        private static int CheckStringHasNext(KeywordString<T> key, ScoutSerializer<T> serializer, string line, int pos)
+        {
+            if (line.Length > pos)
+            {
+                pos = ParseHelper.SkipSpaces(line, pos);
+                string operation = ParseHelper.ReadToken(line, ' ', pos);
+                if (KeywordHelper<T>.StringCombinations.Contains(operation))
+                {
+                    pos += operation.Length;
+                    pos = ParseHelper.SkipSpaces(line, pos);
+
+                    key.HasNext = true;
+                    key.NextOperation = operation;
+                    pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
+                    key.NextFloat = nextReturn.KeywordFloat;
+                    key.NextInt = nextReturn.KeywordInt;
+                    key.NextString = nextReturn.KeywordString;
+                }
+            }
+            return pos;
+        }
+
+        private static int CheckFloatHasNext(KeywordFloat<T> key, ScoutSerializer<T> serializer, string line, int pos)
+        {
+            if (line.Length > pos)
+            {
+                pos = ParseHelper.SkipSpaces(line, pos);
+                string operation = ParseHelper.ReadToken(line, ' ', pos);
+                if (KeywordHelper<T>.FloatCombinations.Contains(operation))
+                {
+                    pos += operation.Length;
+                    pos = ParseHelper.SkipSpaces(line, pos);
+
+                    key.HasNext = true;
+                    key.NextOperation = operation;
+                    pos = LoadKeyword(serializer, line, pos, out KeywordReturn<T> nextReturn);
+                    key.NextFloat = nextReturn.KeywordFloat;
+                    key.NextInt = nextReturn.KeywordInt;
+                    key.NextString = nextReturn.KeywordString;
+                }
+            }
             return pos;
         }
     }

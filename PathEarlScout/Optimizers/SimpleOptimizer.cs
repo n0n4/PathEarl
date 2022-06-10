@@ -15,14 +15,14 @@ namespace PathEarlScout.Optimizers
         private List<int> TileList = new List<int>();
         private List<int> NextTileList = new List<int>();
         private List<int> FailedTileList = new List<int>();
-        private Dictionary<string, Dictionary<string, float>> StringOutcomes = new Dictionary<string, Dictionary<string, float>>();
+        private Dictionary<KeywordName, Dictionary<string, float>> StringOutcomes = new Dictionary<KeywordName, Dictionary<string, float>>();
         private List<Dictionary<string, float>> UnusedStringOutcomeDicts = new List<Dictionary<string, float>>();
-        private Dictionary<string, Dictionary<float, float>> FloatOutcomes = new Dictionary<string, Dictionary<float, float>>();
+        private Dictionary<KeywordName, Dictionary<float, float>> FloatOutcomes = new Dictionary<KeywordName, Dictionary<float, float>>();
         private List<Dictionary<float, float>> UnusedFloatOutcomeDicts = new List<Dictionary<float, float>>();
-        private Dictionary<string, Dictionary<int, float>> IntOutcomes = new Dictionary<string, Dictionary<int, float>>();
+        private Dictionary<KeywordName, Dictionary<int, float>> IntOutcomes = new Dictionary<KeywordName, Dictionary<int, float>>();
         private List<Dictionary<int, float>> UnusedIntOutcomeDicts = new List<Dictionary<int, float>>();
 
-        private List<string> ScratchStrings = new List<string>();
+        private List<KeywordName> ScratchNames = new List<KeywordName>();
         private List<string> ScratchStrings2 = new List<string>();
         private List<int> ScratchInts = new List<int>();
         private List<float> ScratchFloats = new List<float>();
@@ -41,18 +41,19 @@ namespace PathEarlScout.Optimizers
         {
             foreach (Outcome<T> outcome in rule.Outcomes)
             {
-                string keyword = outcome.Keyword.Value(context);
-                if (access.GetFloats.TryGetValue(keyword, out Func<Tile<T>, float> getFloat))
+                string owner = outcome.GetOwner(context);
+                string keyword = outcome.GetKeyword(context);
+                if (access.TryGetFloatGet(owner, keyword, out Func<Tile<T>, float> getFloat))
                 {
-                    AddFloatOutcome(outcome, keyword, getFloat, context);
+                    AddFloatOutcome(outcome, owner, keyword, getFloat, context);
                 }
-                else if (access.GetInts.TryGetValue(keyword, out Func<Tile<T>, int> getInt))
+                else if (access.TryGetIntGet(owner, keyword, out Func<Tile<T>, int> getInt))
                 {
-                    AddIntOutcome(outcome, keyword, getInt, context);
+                    AddIntOutcome(outcome, owner, keyword, getInt, context);
                 }
-                else if (access.GetStrings.TryGetValue(keyword, out Func<Tile<T>, string> getString))
+                else if (access.TryGetStringGet(owner, keyword, out Func<Tile<T>, string> getString))
                 {
-                    AddStringOutcome(outcome, keyword, getString, context);
+                    AddStringOutcome(outcome, owner, keyword, getString, context);
                 }
                 else
                 {
@@ -61,24 +62,24 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddFloatOutcome(Outcome<T> outcome, string keyword, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
+        private void AddFloatOutcome(Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
         {
-            float prob = outcome.Probability.Value(context);
+            float prob = outcome.GetProbability(context);
             if (outcome.ValueFloat != null)
             {
                 float value = outcome.ValueFloat.Value(context);
-                AddFloatOutcomeValue(keyword, outcome.Operation, value, prob, getFloat, context);
+                AddFloatOutcomeValue(owner, keyword, outcome.Operation, value, prob, getFloat, context);
             }
             else if (outcome.ValueInt != null)
             {
                 int value = outcome.ValueInt.Value(context);
-                AddFloatOutcomeValue(keyword, outcome.Operation, value, prob, getFloat, context);
+                AddFloatOutcomeValue(owner, keyword, outcome.Operation, value, prob, getFloat, context);
             }
             else if (outcome.ValueString != null)
             {
                 string value = outcome.ValueString.Value(context);
                 if (float.TryParse(value, out float valueFloat))
-                    AddFloatOutcomeValue(keyword, outcome.Operation, valueFloat, prob, getFloat, context);
+                    AddFloatOutcomeValue(owner, keyword, outcome.Operation, valueFloat, prob, getFloat, context);
                 else
                     throw new Exception("Could not parse '" + value + "' as float");
             }
@@ -88,9 +89,10 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddFloatOutcomeValue(string keyword, string operation, float value, float prob, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
+        private void AddFloatOutcomeValue(string owner, string keyword, string operation, float value, float prob, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
         {
-            if (!FloatOutcomes.TryGetValue(keyword, out Dictionary<float, float> dict))
+            KeywordName name = new KeywordName(owner, keyword);
+            if (!FloatOutcomes.TryGetValue(name, out Dictionary<float, float> dict))
             {
                 if (UnusedFloatOutcomeDicts.Count > 0)
                 {
@@ -101,7 +103,7 @@ namespace PathEarlScout.Optimizers
                 {
                     dict = new Dictionary<float, float>();
                 }
-                FloatOutcomes.Add(keyword, dict);
+                FloatOutcomes.Add(name, dict);
             }
 
             if (operation == "=")
@@ -113,7 +115,7 @@ namespace PathEarlScout.Optimizers
             } 
             else
             {
-                float oldval = getFloat(context.Tiles[0]);
+                float oldval = getFloat(context.GetTile(owner));
                 float newval = KeywordHelper<T>.CombineFloats(oldval, value, operation);
                 if (!dict.ContainsKey(newval))
                     dict.Add(newval, prob);
@@ -122,24 +124,24 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddIntOutcome(Outcome<T> outcome, string keyword, Func<Tile<T>, int> getInt, KeywordContext<T> context)
+        private void AddIntOutcome(Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, int> getInt, KeywordContext<T> context)
         {
-            float prob = outcome.Probability.Value(context);
+            float prob = outcome.GetProbability(context);
             if (outcome.ValueFloat != null)
             {
                 float value = outcome.ValueFloat.Value(context);
-                AddIntOutcomeValue(keyword, outcome.Operation, (int)value, prob, getInt, context);
+                AddIntOutcomeValue(owner, keyword, outcome.Operation, (int)value, prob, getInt, context);
             }
             else if (outcome.ValueInt != null)
             {
                 int value = outcome.ValueInt.Value(context);
-                AddIntOutcomeValue(keyword, outcome.Operation, value, prob, getInt, context);
+                AddIntOutcomeValue(owner, keyword, outcome.Operation, value, prob, getInt, context);
             }
             else if (outcome.ValueString != null)
             {
                 string value = outcome.ValueString.Value(context);
                 if (int.TryParse(value, out int valueInt))
-                    AddIntOutcomeValue(keyword, outcome.Operation, valueInt, prob, getInt, context);
+                    AddIntOutcomeValue(owner, keyword, outcome.Operation, valueInt, prob, getInt, context);
                 else
                     throw new Exception("Could not parse '" + value + "' as int");
             }
@@ -149,9 +151,10 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddIntOutcomeValue(string keyword, string operation, int value, float prob, Func<Tile<T>, int> getInt, KeywordContext<T> context)
+        private void AddIntOutcomeValue(string owner, string keyword, string operation, int value, float prob, Func<Tile<T>, int> getInt, KeywordContext<T> context)
         {
-            if (!IntOutcomes.TryGetValue(keyword, out Dictionary<int, float> dict))
+            KeywordName name = new KeywordName(owner, keyword);
+            if (!IntOutcomes.TryGetValue(name, out Dictionary<int, float> dict))
             {
                 if (UnusedIntOutcomeDicts.Count > 0)
                 {
@@ -162,7 +165,7 @@ namespace PathEarlScout.Optimizers
                 {
                     dict = new Dictionary<int, float>();
                 }
-                IntOutcomes.Add(keyword, dict);
+                IntOutcomes.Add(name, dict);
             }
 
             if (operation == "=")
@@ -174,7 +177,7 @@ namespace PathEarlScout.Optimizers
             }
             else
             {
-                int oldval = getInt(context.Tiles[0]);
+                int oldval = getInt(context.GetTile(owner));
                 int newval = KeywordHelper<T>.CombineInts(oldval, value, operation);
                 if (!dict.ContainsKey(newval))
                     dict.Add(newval, prob);
@@ -183,23 +186,23 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddStringOutcome(Outcome<T> outcome, string keyword, Func<Tile<T>, string> getString, KeywordContext<T> context)
+        private void AddStringOutcome(Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, string> getString, KeywordContext<T> context)
         {
-            float prob = outcome.Probability.Value(context);
+            float prob = outcome.GetProbability(context);
             if (outcome.ValueFloat != null)
             {
                 float value = outcome.ValueFloat.Value(context);
-                AddStringOutcomeValue(keyword, outcome.Operation, value.ToString(), prob, getString, context);
+                AddStringOutcomeValue(owner, keyword, outcome.Operation, value.ToString(), prob, getString, context);
             }
             else if (outcome.ValueInt != null)
             {
                 int value = outcome.ValueInt.Value(context);
-                AddStringOutcomeValue(keyword, outcome.Operation, value.ToString(), prob, getString, context);
+                AddStringOutcomeValue(owner, keyword, outcome.Operation, value.ToString(), prob, getString, context);
             }
             else if (outcome.ValueString != null)
             {
                 string value = outcome.ValueString.Value(context);
-                AddStringOutcomeValue(keyword, outcome.Operation, value, prob, getString, context);
+                AddStringOutcomeValue(owner, keyword, outcome.Operation, value, prob, getString, context);
             }
             else
             {
@@ -207,9 +210,10 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void AddStringOutcomeValue(string keyword, string operation, string value, float prob, Func<Tile<T>, string> getString, KeywordContext<T> context)
+        private void AddStringOutcomeValue(string owner, string keyword, string operation, string value, float prob, Func<Tile<T>, string> getString, KeywordContext<T> context)
         {
-            if (!StringOutcomes.TryGetValue(keyword, out Dictionary<string, float> dict))
+            KeywordName name = new KeywordName(owner, keyword);
+            if (!StringOutcomes.TryGetValue(name, out Dictionary<string, float> dict))
             {
                 if (UnusedStringOutcomeDicts.Count > 0)
                 {
@@ -220,7 +224,7 @@ namespace PathEarlScout.Optimizers
                 {
                     dict = new Dictionary<string, float>();
                 }
-                StringOutcomes.Add(keyword, dict);
+                StringOutcomes.Add(name, dict);
             }
 
             if (operation == "=")
@@ -232,7 +236,7 @@ namespace PathEarlScout.Optimizers
             }
             else
             {
-                string oldval = getString(context.Tiles[0]);
+                string oldval = getString(context.GetTile(owner));
                 string newval = KeywordHelper<T>.CombineStrings(oldval, value, operation);
                 if (!dict.ContainsKey(newval))
                     dict.Add(newval, prob);
@@ -241,18 +245,225 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        public void RunLayer(Scout<T> scout, Layer<T> layer, List<Rule<T>> globals)
+        private void ExecuteOutcome(InfoAccess<T> access, Tile<T> tile, Outcome<T> outcome, KeywordContext<T> context)
+        {
+            string owner = outcome.GetOwner(context);
+            string keyword = outcome.GetKeyword(context);
+            if (access.TryGetFloatGet(owner, keyword, out Func<Tile<T>, float> getFloat))
+            {
+                ExecuteFloatOutcome(tile, outcome, owner, keyword, getFloat, context);
+            }
+            else if (access.TryGetIntGet(owner, keyword, out Func<Tile<T>, int> getInt))
+            {
+                ExecuteIntOutcome(tile, outcome, owner, keyword, getInt, context);
+            }
+            else if (access.TryGetStringGet(owner, keyword, out Func<Tile<T>, string> getString))
+            {
+                ExecuteStringOutcome(tile, outcome, owner, keyword, getString, context);
+            }
+            else
+            {
+                throw new Exception("Keyword '" + keyword + "' not recognized");
+            }
+        }
+
+        private void ExecuteFloatOutcome(Tile<T> tile, Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
+        {
+            float prob = outcome.GetProbability(context);
+            if (prob < 1 && Random.NextDouble() > prob)
+                return; // failed the check
+
+            if (outcome.ValueFloat != null)
+            {
+                float value = outcome.ValueFloat.Value(context);
+                ExecuteFloatOutcomeValue(tile, owner, keyword, outcome.Operation, value, getFloat, context);
+            }
+            else if (outcome.ValueInt != null)
+            {
+                int value = outcome.ValueInt.Value(context);
+                ExecuteFloatOutcomeValue(tile, owner, keyword, outcome.Operation, value, getFloat, context);
+            }
+            else if (outcome.ValueString != null)
+            {
+                string value = outcome.ValueString.Value(context);
+                if (float.TryParse(value, out float valueFloat))
+                    ExecuteFloatOutcomeValue(tile, owner, keyword, outcome.Operation, valueFloat, getFloat, context);
+                else
+                    throw new Exception("Could not parse '" + value + "' as float");
+            }
+            else
+            {
+                throw new Exception("Expected outcome to have value.");
+            }
+        }
+
+        private void ExecuteFloatOutcomeValue(Tile<T> tile, string owner, string keyword, string operation, float value, Func<Tile<T>, float> getFloat, KeywordContext<T> context)
+        {
+            if (!context.InfoAccess.TryGetFloatSet(owner, keyword, out Action<Tile<T>, float> func))
+                throw new Exception("Float set method for '" + owner + "." + keyword + "' not found");
+            
+            if (operation == "=")
+            {
+                func(tile, value);
+            }
+            else
+            {
+                float oldval = getFloat(context.GetTile(owner));
+                float newval = KeywordHelper<T>.CombineFloats(oldval, value, operation);
+                func(tile, newval);
+            }
+        }
+
+        private void ExecuteIntOutcome(Tile<T> tile, Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, int> getInt, KeywordContext<T> context)
+        {
+            float prob = outcome.GetProbability(context);
+            if (prob < 1 && Random.NextDouble() > prob)
+                return; // failed the check
+
+            if (outcome.ValueFloat != null)
+            {
+                float value = outcome.ValueFloat.Value(context);
+                ExecuteIntOutcomeValue(tile, owner, keyword, outcome.Operation, (int)value, getInt, context);
+            }
+            else if (outcome.ValueInt != null)
+            {
+                int value = outcome.ValueInt.Value(context);
+                ExecuteIntOutcomeValue(tile, owner, keyword, outcome.Operation, value, getInt, context);
+            }
+            else if (outcome.ValueString != null)
+            {
+                string value = outcome.ValueString.Value(context);
+                if (int.TryParse(value, out int valueInt))
+                    ExecuteIntOutcomeValue(tile, owner, keyword, outcome.Operation, valueInt, getInt, context);
+                else
+                    throw new Exception("Could not parse '" + value + "' as int");
+            }
+            else
+            {
+                throw new Exception("Expected outcome to have value.");
+            }
+        }
+
+        private void ExecuteIntOutcomeValue(Tile<T> tile, string owner, string keyword, string operation, int value, Func<Tile<T>, int> getInt, KeywordContext<T> context)
+        {
+            if (!context.InfoAccess.TryGetIntSet(owner, keyword, out Action<Tile<T>, int> func))
+                throw new Exception("Int set method for '" + owner + "." + keyword + "' not found");
+
+            if (operation == "=")
+            {
+                func(tile, value);
+            }
+            else
+            {
+                int oldval = getInt(context.GetTile(owner));
+                int newval = KeywordHelper<T>.CombineInts(oldval, value, operation);
+                func(tile, newval);
+            }
+        }
+
+        private void ExecuteStringOutcome(Tile<T> tile, Outcome<T> outcome, string owner, string keyword, Func<Tile<T>, string> getString, KeywordContext<T> context)
+        {
+            float prob = outcome.GetProbability(context);
+            if (prob < 1 && Random.NextDouble() > prob)
+                return; // failed the check
+
+            if (outcome.ValueFloat != null)
+            {
+                float value = outcome.ValueFloat.Value(context);
+                ExecuteStringOutcomeValue(tile, owner, keyword, outcome.Operation, value.ToString(), getString, context);
+            }
+            else if (outcome.ValueInt != null)
+            {
+                int value = outcome.ValueInt.Value(context);
+                ExecuteStringOutcomeValue(tile, owner, keyword, outcome.Operation, value.ToString(), getString, context);
+            }
+            else if (outcome.ValueString != null)
+            {
+                string value = outcome.ValueString.Value(context);
+                ExecuteStringOutcomeValue(tile, owner, keyword, outcome.Operation, value, getString, context);
+            }
+            else
+            {
+                throw new Exception("Expected outcome to have value.");
+            }
+        }
+
+        private void ExecuteStringOutcomeValue(Tile<T> tile, string owner, string keyword, string operation, string value, Func<Tile<T>, string> getString, KeywordContext<T> context)
+        {
+            if (!context.InfoAccess.TryGetStringSet(owner, keyword, out Action<Tile<T>, string> func))
+                throw new Exception("String set method for '" + owner + "." + keyword + "' not found");
+
+            if (operation == "=")
+            {
+                func(tile, value);
+            }
+            else
+            {
+                string oldval = getString(context.GetTile(owner));
+                string newval = KeywordHelper<T>.CombineStrings(oldval, value, operation);
+                func(tile, newval);
+            }
+        }
+
+        public void RunLayer(Scout<T> scout, Layer<T> layer, Layer<T> global)
         {
             // pull out some useful components
             Map<T> map = scout.Map;
             ScoutRecycler<T> recycler = scout.Recycler;
             KeywordContext<T> context = recycler.KeywordContextPool.Request();
+            InfoAccess<T> infoAccess = scout.InfoAccess;
+
+            // do global execution
+            context.Clear();
+            Tile<T> blankTile = context.Setup(map, infoAccess, map.Nodes.Keys.First());
+            foreach (Rule<T> rule in global.GlobalRules)
+            {
+                if (rule.Condition.Evaluate(context))
+                {
+                    foreach(Outcome<T> outcome in rule.Outcomes)
+                        ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                }
+            }
+
+            foreach (Rule<T> rule in layer.GlobalRules)
+            {
+                if (rule.Condition.Evaluate(context))
+                {
+                    foreach (Outcome<T> outcome in rule.Outcomes)
+                        ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                }
+            }
 
             // put all tiles in random order
             TileList.Clear();
             TileList.AddRange(map.Nodes.Keys);
             for (int i = 0; i < 7; i++)
                 RandomHelper.Shuffle<int>(Random, TileList);
+
+            // do autoexecution for all tiles
+            for (int i = 0; i < TileList.Count; i++)
+            {
+                int id = TileList[i];
+                context.Clear();
+                Tile<T> tile = context.Setup(map, infoAccess, id);
+                foreach (Rule<T> rule in global.AutoRules)
+                {
+                    if (rule.Condition.Evaluate(context))
+                    {
+                        foreach (Outcome<T> outcome in rule.Outcomes)
+                            ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                    }
+                }
+
+                foreach (Rule<T> rule in layer.AutoRules)
+                {
+                    if (rule.Condition.Evaluate(context))
+                    {
+                        foreach (Outcome<T> outcome in rule.Outcomes)
+                            ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                    }
+                }
+            }
 
             // check every tile
             NextTileList.Clear();
@@ -265,7 +476,7 @@ namespace PathEarlScout.Optimizers
 
                 // setup context
                 context.Clear();
-                Tile<T> tile = context.Setup(map, id);
+                Tile<T> tile = context.Setup(map, infoAccess, id);
 
                 // clean outcomes dictionary
                 foreach (var kvp in FloatOutcomes)
@@ -290,11 +501,11 @@ namespace PathEarlScout.Optimizers
                 StringOutcomes.Clear();
 
                 // run all the rules and generate a list of possible outcomes
-                foreach (Rule<T> rule in globals)
+                foreach (Rule<T> rule in global.Rules)
                 {
                     if (rule.Condition.Evaluate(context))
                     {
-                        AddOutcomes(scout.InfoAccess, rule, context);
+                        AddOutcomes(infoAccess, rule, context);
                     }
                     // tell the context to cleanup for the next rule
                     context.EndRule();
@@ -304,7 +515,7 @@ namespace PathEarlScout.Optimizers
                 {
                     if (rule.Condition.Evaluate(context))
                     {
-                        AddOutcomes(scout.InfoAccess, rule, context);
+                        AddOutcomes(infoAccess, rule, context);
                     }
                     // tell the context to cleanup for the next rule
                     context.EndRule();
@@ -314,9 +525,9 @@ namespace PathEarlScout.Optimizers
                 // however, we can only pick one that has positive probabilities
                 // so, clear out all options that have negative probabilities
                 // and clear out all empty keywords after that
-                CleanupOutcomes<float>(FloatOutcomes, UnusedFloatOutcomeDicts, ScratchFloats, ScratchStrings);
-                CleanupOutcomes<int>(IntOutcomes, UnusedIntOutcomeDicts, ScratchInts, ScratchStrings);
-                CleanupOutcomes<string>(StringOutcomes, UnusedStringOutcomeDicts, ScratchStrings2, ScratchStrings);
+                CleanupOutcomes<float>(FloatOutcomes, UnusedFloatOutcomeDicts, ScratchFloats, ScratchNames);
+                CleanupOutcomes<int>(IntOutcomes, UnusedIntOutcomeDicts, ScratchInts, ScratchNames);
+                CleanupOutcomes<string>(StringOutcomes, UnusedStringOutcomeDicts, ScratchStrings2, ScratchNames);
 
                 // now tally the keywords and pick one
                 int keycount = FloatOutcomes.Keys.Count + StringOutcomes.Keys.Count + IntOutcomes.Keys.Count;
@@ -330,22 +541,28 @@ namespace PathEarlScout.Optimizers
                 int randomkey = Random.Next(0, keycount);
                 if (randomkey < FloatOutcomes.Count)
                 {
-                    float finalValue = RollOutcome<float>(FloatOutcomes, randomkey, out string finalKeyword);
-                    scout.InfoAccess.SetFloats[finalKeyword](tile, finalValue);
+                    float finalValue = RollOutcome<float>(FloatOutcomes, randomkey, out KeywordName finalKeyword);
+                    if (!scout.InfoAccess.TryGetFloatSet(finalKeyword.Owner, finalKeyword.Keyword, out Action<Tile<T>, float> func))
+                        throw new Exception("Float set method for '" + finalKeyword.Owner + "." + finalKeyword.Keyword + "' not found");
+                    func(tile, finalValue);
                 }
                 else
                 {
                     randomkey -= FloatOutcomes.Count;
                     if (randomkey < StringOutcomes.Count)
                     {
-                        string finalValue = RollOutcome<string>(StringOutcomes, randomkey, out string finalKeyword);
-                        scout.InfoAccess.SetStrings[finalKeyword](tile, finalValue);
+                        string finalValue = RollOutcome<string>(StringOutcomes, randomkey, out KeywordName finalKeyword);
+                        if (!scout.InfoAccess.TryGetStringSet(finalKeyword.Owner, finalKeyword.Keyword, out Action<Tile<T>, string> func))
+                            throw new Exception("String set method for '" + finalKeyword.Owner + "." + finalKeyword.Keyword + "' not found");
+                        func(tile, finalValue);
                     }
                     else
                     {
                         randomkey -= StringOutcomes.Count;
-                        int finalValue = RollOutcome<int>(IntOutcomes, randomkey, out string finalKeyword);
-                        scout.InfoAccess.SetInts[finalKeyword](tile, finalValue);
+                        int finalValue = RollOutcome<int>(IntOutcomes, randomkey, out KeywordName finalKeyword);
+                        if (!scout.InfoAccess.TryGetIntSet(finalKeyword.Owner, finalKeyword.Keyword, out Action<Tile<T>, int> func))
+                            throw new Exception("Int set method for '" + finalKeyword.Owner + "." + finalKeyword.Keyword + "' not found");
+                        func(tile, finalValue);
                     }
                 }
 
@@ -383,11 +600,11 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private void CleanupOutcomes<U>(Dictionary<string, Dictionary<U, float>> outcomes,
-            List<Dictionary<U, float>> unusedOutcomes, List<U> scratch, List<string> scratchStrings)
+        private void CleanupOutcomes<U>(Dictionary<KeywordName, Dictionary<U, float>> outcomes,
+            List<Dictionary<U, float>> unusedOutcomes, List<U> scratch, List<KeywordName> scratchNames)
         {
             scratch.Clear();
-            scratchStrings.Clear();
+            scratchNames.Clear();
             foreach (var keyoutcomes in outcomes)
             {
                 foreach (var values in keyoutcomes.Value)
@@ -402,9 +619,9 @@ namespace PathEarlScout.Optimizers
                     keyoutcomes.Value.Remove(value);
 
                 if (keyoutcomes.Value.Count <= 0)
-                    scratchStrings.Add(keyoutcomes.Key);
+                    scratchNames.Add(keyoutcomes.Key);
             }
-            foreach (string k in scratchStrings)
+            foreach (KeywordName k in scratchNames)
             {
                 Dictionary<U, float> dict = outcomes[k];
                 dict.Clear();
@@ -413,9 +630,9 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private U RollOutcome<U>(Dictionary<string, Dictionary<U, float>> keyoutcomes, int randomkey, out string keyword)
+        private U RollOutcome<U>(Dictionary<KeywordName, Dictionary<U, float>> keyoutcomes, int randomkey, out KeywordName keyword)
         {
-            keyword = null;
+            keyword = new KeywordName();
             Dictionary<U, float> outcomes = null;
             foreach (var keyoutcome in keyoutcomes)
             {

@@ -8,10 +8,11 @@ namespace PathEarlScout.Keywords
 {
     public class KeywordString<T> : IPoolable where T : ITileInfo
     {
-        public string KeywordOwner;
-        public string Keyword;
+        public KeywordString<T> KeywordOwner;
+        public KeywordString<T> Keyword;
         public Func<Tile<T>, string> Accessor;
         public string Literal;
+        public EKeywordType PrefixType = EKeywordType.None;
 
         public bool HasNext = false;
         public string NextOperation;
@@ -60,8 +61,17 @@ namespace PathEarlScout.Keywords
         {
             if (Accessor != null)
             {
-                Tile<T> tile = context.GetTile(KeywordOwner);
+                Tile<T> tile = context.GetTile(KeywordOwner.Value(context));
                 return Accessor(tile);
+            }
+            else if (KeywordOwner != null)
+            {
+                string owner = KeywordOwner.Value(context);
+                string keyword = Keyword.Value(context);
+                if (!context.InfoAccess.TryGetStringGet(owner, keyword, out Func<Tile<T>, string> func))
+                    throw new Exception("Dynamically generated keyword '" + keyword + "' not found");
+                Tile<T> tile = context.GetTile(owner);
+                return func(tile);
             }
             return Literal;
         }

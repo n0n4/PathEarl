@@ -3,6 +3,8 @@ using PathEarlCore;
 using PathEarlPixelLabInterface;
 using PathEarlScout;
 using PathEarlViz;
+using System;
+using UT_PathEarlScout.TestScouts;
 
 namespace UT_PathEarlScout
 {
@@ -34,12 +36,11 @@ namespace UT_PathEarlScout
             return col;
         }
 
-        [TestMethod]
-        public void RunBasicScoutTest()
+        public void RunTest(string name, int w, int h, Action<Scout<BasicTileInfo>> setup)
         {
-            Map<BasicTileInfo> map = BasicScout.MakeHexMap(100, 100, out BasicTileInfo[,] infos);
-            Scout<BasicTileInfo> scout = BasicScout.MakeScout(map, "basic-scout");
-            BasicScout.AddBasicScoutRules(scout);
+            Map<BasicTileInfo> map = BasicScout.MakeHexMap(w, h, out BasicTileInfo[,] infos);
+            Scout<BasicTileInfo> scout = BasicScout.MakeScout(map, name);
+            setup(scout);
             scout.Run();
 
             Bitmap b = MapViz<BasicTileInfo>.DrawMap(map, 10, BackColor, LineColor, Coloration);
@@ -67,7 +68,7 @@ namespace UT_PathEarlScout
                     b.DrawLine(relx + 2, rely + 10, relx + 5, rely + 2, mountainCol);
                     b.DrawLine(relx + 7, rely + 10, relx + 5, rely + 2, mountainCol);
                 }
-                
+
                 if (kvp.Value.TileFeature == 1) // forest
                 {
                     b.SetPixel(relx, rely, forestCol, 1);
@@ -76,7 +77,68 @@ namespace UT_PathEarlScout
                 }
             }
 
-            ImageSharpExport.Save("./runbasicscouttest.png", b);
+            ImageSharpExport.Save("./" + name + "-run.png", b);
+        }
+
+        public void SaveLoadRunTest(string name, int w, int h, Action<Scout<BasicTileInfo>> setup)
+        {
+            Scout<BasicTileInfo> loadScout = UT_ScoutSerializer.SaveLoad(name, setup, out Scout<BasicTileInfo> scout);
+
+            RunTest(name + "-save-load", w, h, setup);
+        }
+
+        [TestMethod]
+        public void StandardMap_RunTest()
+        {
+            RunTest("standard-map", 100, 100, (scout) =>
+            {
+                StandardMapScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void GlobalVar_RunTest()
+        {
+            RunTest("global-var", 100, 100, (scout) =>
+            {
+                GlobalVarScout.AddRules(scout);
+            });
+        }
+        
+        [TestMethod]
+        public void DynamicBracket_RunTest()
+        {
+            RunTest("dynamic-bracket", 100, 100, (scout) =>
+            {
+                DynamicBracketScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void StandardMap_SaveLoadRunTest()
+        {
+            SaveLoadRunTest("standard-map", 100, 100, (scout) =>
+            {
+                StandardMapScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void GlobalVar_SaveLoadRunTest()
+        {
+            SaveLoadRunTest("global-var", 100, 100, (scout) =>
+            {
+                GlobalVarScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void DynamicBracket_SaveLoadRunTest()
+        {
+            SaveLoadRunTest("dynamic-bracket", 100, 100, (scout) =>
+            {
+                DynamicBracketScout.AddRules(scout);
+            });
         }
     }
 }
