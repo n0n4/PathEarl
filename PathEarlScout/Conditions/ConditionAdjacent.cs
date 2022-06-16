@@ -9,7 +9,7 @@ namespace PathEarlScout.Conditions
     public class ConditionAdjacent<T> : ICondition<T> where T : ITileInfo
     {
         public const string Keyword = "adjacent";
-        //       from, to
+        
         public ICondition<T> Condition;
         public int Min = 1;
         public int Max = -1;

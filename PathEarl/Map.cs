@@ -145,6 +145,18 @@ namespace PathEarlCore
             Blocks[id] = EMapLayer.None;
         }
 
+        public float GetAngle(int fromId, int toId)
+        {
+            float dx = NodeX[toId] - NodeX[fromId];
+            float dy = NodeY[toId] - NodeY[fromId];
+            return (float)Math.Atan2(dy, dx);
+        }
+
+        public float GetAngleDeg(int fromId, int toId)
+        {
+            return (float)(180f / Math.PI) * GetAngle(fromId, toId);
+        }
+
         public int[,] GenerateGrid(int width, int height, out T[,] infos, bool[,] gaps = null, float xdist = 1, float ydist = 1, bool diags = false, bool hex = false)
         {
             int[,] ids = new int[width, height];
