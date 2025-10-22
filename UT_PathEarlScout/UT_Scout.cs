@@ -1,6 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PathEarlCore;
-using PathEarlPixelLabInterface;
 using PathEarlScout;
 using PathEarlViz;
 using System;
@@ -77,7 +76,7 @@ namespace UT_PathEarlScout
                 }
             }
 
-            ImageSharpExport.Save("./" + name + "-run.png", b);
+            b.ToDrawingBitmap().Save("./" + name + "-run.png");
         }
 
         public void SaveLoadRunTest(string name, int w, int h, Action<Scout<BasicTileInfo>> setup)

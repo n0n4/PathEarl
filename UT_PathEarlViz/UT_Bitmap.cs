@@ -1,6 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PathEarlCore;
-using PathEarlPixelLabInterface;
 using PathEarlViz;
 using System;
 using System.Collections.Generic;
@@ -95,7 +94,7 @@ namespace UT_PathEarlViz
             MapScratch<EmptyTileInfo> scratch = new MapScratch<EmptyTileInfo>();
             MapViz<EmptyTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.None, scratch), new byte[] { 255, 0, 0, 255 }, 0);
 
-            ImageSharpExport.Save("./testmap.png", b);
+            b.ToDrawingBitmap().Save("./testmap.png");
         }
 
         [TestMethod]
@@ -159,7 +158,7 @@ namespace UT_PathEarlViz
             MapScratch<EmptyTileInfo> scratch = new MapScratch<EmptyTileInfo>();
             MapViz<EmptyTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.None, scratch), new byte[] { 255, 0, 0, 255 }, 0);
 
-            ImageSharpExport.Save("./testhexmap.png", b);
+            b.ToDrawingBitmap().Save("./testhexmap.png");
         }
 
         [TestMethod]
@@ -225,7 +224,7 @@ namespace UT_PathEarlViz
             MapViz<EmptyTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.Ground, scratch), new byte[] { 255, 155, 0, 255 }, 4);
             MapViz<EmptyTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.Ground | EMapLayer.Sea, scratch), new byte[] { 255, 0, 155, 255 }, -4);
 
-            ImageSharpExport.Save("./testhexmapblocks.png", b);
+            b.ToDrawingBitmap().Save("./testhexmapblocks.png");
         }
 
         [TestMethod]
@@ -288,7 +287,7 @@ namespace UT_PathEarlViz
             MapScratch<EmptyTileInfo> scratch = new MapScratch<EmptyTileInfo>();
             MapViz<EmptyTileInfo>.DrawFlowfield(b, map, map.DjikstraFlowfield(start, EMapLayer.Ground | EMapLayer.Sea, scratch), new byte[] { 255, 0, 0, 255 }, 0);
 
-            ImageSharpExport.Save("./testhexmapflowfield.png", b);
+            b.ToDrawingBitmap().Save("./testhexmapflowfield.png");
         }
 
         [TestMethod]
@@ -354,7 +353,7 @@ namespace UT_PathEarlViz
             float max = 5f;
             MapViz<EmptyTileInfo>.DrawSearch(b, map, max, map.DjikstraSearch(start, min, max, EMapLayer.Ground | EMapLayer.Sea, scratch), new byte[] { 255, 0, 0, 255 }, 0);
 
-            ImageSharpExport.Save("./testhexmapsearch.png", b);
+            b.ToDrawingBitmap().Save("./testhexmapsearch.png");
         }
 
         [TestMethod]
@@ -454,7 +453,7 @@ namespace UT_PathEarlViz
             MapViz<TestTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.Ground, scratch, cost), new byte[] { 255, 155, 0, 255 }, 4);
             MapViz<TestTileInfo>.DrawPath(b, map, map.Djikstra(start, target, EMapLayer.Ground | EMapLayer.Sea, scratch, cost), new byte[] { 255, 0, 155, 255 }, -4);
 
-            ImageSharpExport.Save("./testhexmaptileinfoforest.png", b);
+            b.ToDrawingBitmap().Save("./testhexmaptileinfoforest.png");
         }
     }
 }

@@ -122,5 +122,18 @@ namespace PathEarlViz
                 o += Math.Sign(w); // progress closer to our final x position
             }
         }
+
+        public System.Drawing.Bitmap ToDrawingBitmap()
+        {
+            System.Drawing.Bitmap drawing = new System.Drawing.Bitmap(Width, Height);
+            for (int i = 0; i < Width; i++)
+            {
+                for (int o = 0; o < Height; o++)
+                {
+                    drawing.SetPixel(i, o, System.Drawing.Color.FromArgb(A[i, o], R[i, o], G[i, o], B[i, o]));
+                }
+            }
+            return drawing;
+        }
     }
 }
