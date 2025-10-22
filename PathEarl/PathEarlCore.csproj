@@ -1,11 +1,21 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>PathEarlCore</Title>
+    <Authors>n0n4</Authors>
+    <Description>Pathfinding package.</Description>
+    <PackageProjectUrl>https://github.com/n0n4/PathEarl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/n0n4/PathEarl</RepositoryUrl>
+    <PackageTags>Pathfinding</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="PathEarl_v1.zip" />
+    <None Include=".\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

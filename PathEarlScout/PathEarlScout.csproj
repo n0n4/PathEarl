@@ -1,17 +1,28 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>PathEarlScout</Title>
+    <Authors>n0n4</Authors>
+    <Description>Mapgen package.</Description>
+    <PackageProjectUrl>https://github.com/n0n4/PathEarl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/n0n4/PathEarl</RepositoryUrl>
+    <PackageTags>Mapgen</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RelaStructures" Version="1.0.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PathEarl\PathEarlCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="RelaStructures">
-      <HintPath>..\ExternalDLLs\RelaStructures.dll</HintPath>
-    </Reference>
+    <None Include=".\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

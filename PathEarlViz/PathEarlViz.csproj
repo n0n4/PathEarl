@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <Title>PathEarlViz</Title>
+    <Authors>n0n4</Authors>
+    <Description>Visualization for PathEarlScout mapgen package.</Description>
+    <PackageProjectUrl>https://github.com/n0n4/PathEarl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/n0n4/PathEarl</RepositoryUrl>
+    <PackageTags>Mapgen</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +19,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PathEarl\PathEarlCore.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include=".\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

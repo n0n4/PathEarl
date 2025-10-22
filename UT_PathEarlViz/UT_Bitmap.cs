@@ -445,7 +445,7 @@ namespace UT_PathEarlViz
                 int relx = MapViz<TestTileInfo>.FindRelativePosition(map.NodeX[id], b.SmallestX, b.Resolution);
                 int rely = MapViz<TestTileInfo>.FindRelativePosition(map.NodeY[id], b.SmallestY, b.Resolution);
 
-                b.SetPixel(relx, rely, col, 6);
+                b.SetPixel(relx, rely, col, 3);
             }
 
             MapScratch<TestTileInfo> scratch = new MapScratch<TestTileInfo>();
