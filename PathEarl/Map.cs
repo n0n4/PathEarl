@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PathEarlCore.Quads;
+using System;
 using System.Collections.Generic;
 
 namespace PathEarlCore
@@ -16,10 +17,93 @@ namespace PathEarlCore
         public List<T> UsedInfo = new List<T>();
         public Func<T> InfoSpawner;
         public int CurrentId = 0;
+        public struct QuadCollisionChecker : IQuadCollisionChecker<TileQuadEntry>
+        {
+            public bool Collides(Quadentry<TileQuadEntry> a, Quadentry<TileQuadEntry> b)
+            {
+                if ((a.Data.Blocking & b.Data.Blocking) == 0
+                    || a.X + a.W < b.X
+                    || a.Y + a.H < b.Y
+                    || a.X > b.X + b.W
+                    || a.Y > b.Y + b.H)
+                    return false;
+
+                return true;
+            }
+        }
+        public Dictionary<int, Quadentry<TileQuadEntry>> QuadEntries = new Dictionary<int, Quadentry<TileQuadEntry>>();
+        public Quadhead<TileQuadEntry> Quadhead = null;
+        public Quadchecker<TileQuadEntry, QuadCollisionChecker> Quadchecker = null;
+        private Dictionary<EMapLayer, Quadentry<TileQuadEntry>> ScratchQuadEntries = new Dictionary<EMapLayer, Quadentry<TileQuadEntry>>();
 
         public Map(Func<T> infoSpawner)
         {
             InfoSpawner = infoSpawner;
+        }
+
+        public void SetupQuad()
+        {
+            if (Quadhead == null)
+            {
+                int maxNodes = NodeX.Count;
+                Quadhead = new Quadhead<TileQuadEntry>(new TileQuadEntry(), 2f, maxNodes / 4, maxNodes);
+                Quadchecker = new Quadchecker<TileQuadEntry, QuadCollisionChecker>(Quadhead);
+            }
+
+            float x = float.MaxValue;
+            float y = float.MaxValue;
+            float w = float.MinValue;
+            float h = float.MinValue;
+
+            foreach (var kvp in NodeX)
+            {
+                if (kvp.Value < x)
+                    x = kvp.Value;
+                if (kvp.Value > w)
+                    w = kvp.Value;
+            }
+
+            foreach (var kvp in NodeY)
+            {
+                if (kvp.Value < y)
+                    y = kvp.Value;
+                if (kvp.Value > h)
+                    h = kvp.Value;
+            }
+
+            float radius = (w - x) / 10;
+            if (radius < 2)
+                radius = 2;
+
+            Quadhead.Clear();
+            Quadhead.StartTree(x - radius, y - radius, w + radius, h + radius);
+
+            foreach (var kvp in Nodes)
+            {
+                int id = kvp.Key;
+                float nodex = NodeX[id];
+                float nodey = NodeY[id];
+
+                float minsize = int.MaxValue;
+                foreach (var connection in kvp.Value)
+                {
+                    if (connection.Value < minsize)
+                    {
+                        minsize = connection.Value;
+                    }
+                }
+
+                EMapLayer blocking = EMapLayer.None;
+                Blocks.TryGetValue(id, out blocking);
+                TileQuadEntry entry = new TileQuadEntry()
+                {
+                    Blocking = blocking,
+                    Id = id
+                };
+
+                // this method may be a bit awkward for strangely shaped maps
+                QuadEntries[id] = Quadhead.Insert(entry, nodex - (minsize / 2f), nodey - (minsize / 2f), minsize, minsize);
+            }
         }
 
         public Tile<T> GetTile(int id)
@@ -82,6 +166,7 @@ namespace PathEarlCore
             UsedInfo.Add(info);
             NodeX[id] = x;
             NodeY[id] = y;
+
             return id;
         }
 
@@ -125,6 +210,9 @@ namespace PathEarlCore
                 Blocks[id] = blocking | layer;
             else
                 Blocks.Add(id, layer);
+
+            if (QuadEntries.TryGetValue(id, out Quadentry<TileQuadEntry> entry))
+                entry.Data.Blocking = Blocks[id];
         }
 
         public bool IsBlocked(int id, EMapLayer layer)
@@ -134,10 +222,43 @@ namespace PathEarlCore
             return false;
         }
 
+        private Quadentry<TileQuadEntry> GetScratchQuadEntry(EMapLayer layer)
+        {
+            if (ScratchQuadEntries.TryGetValue(layer, out var existingEntry))
+                return existingEntry;
+
+            Quadentry<TileQuadEntry> entry = new Quadentry<TileQuadEntry>(new TileQuadEntry());
+            entry.Data.Blocking = layer;
+            ScratchQuadEntries[layer] = entry;
+            return entry;
+        }
+
+        public bool IsBlocked(int id, EMapLayer layer, List<(float, float)> shape, float radius = 0.5f)
+        {
+            var testEntry = GetScratchQuadEntry(layer);
+            float origX = NodeX[id];
+            float origY = NodeY[id];
+
+            foreach (var pos in shape)
+            {
+                float newX = pos.Item1 + origX;
+                float newY = pos.Item2 + origY;
+                Quadentry<TileQuadEntry> hit = Quadchecker.CheckFirst(testEntry,
+                    newX - (radius / 2f), newY - (radius / 2f), radius, radius);
+
+                if (hit != null)
+                    return true;
+            }
+            return false;
+        }
+
         public void Unblock(int id, EMapLayer layer)
         {
             if (IsBlocked(id, layer))
                 Blocks[id] &= ~layer;
+
+            if (QuadEntries.TryGetValue(id, out Quadentry<TileQuadEntry> entry))
+                entry.Data.Blocking = Blocks[id];
         }
 
         public void Unblock(int id)
@@ -231,7 +352,7 @@ namespace PathEarlCore
         }
 
         // note: the cost method params are "from id", "to id", "distance", "from info", "to info"
-        public List<int> Djikstra(int start, int end, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null)
+        public List<int> Djikstra(int start, int end, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null, List<(float, float)> shape = null, float radius = 0.5f)
         {
             List<int> path = scratch.Path;
             path.Clear();
@@ -245,7 +366,12 @@ namespace PathEarlCore
             // first, put all the nodes in the list to be checked
             foreach (int id in Nodes.Keys)
             {
-                if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                if (shape != null)
+                {
+                    if (IsBlocked(id, layer, shape, radius))
+                        continue;
+                }
+                else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                     continue; 
 
                 dists.Add(id, float.MaxValue); // start them all at max distance, we'll set the start
@@ -297,7 +423,12 @@ namespace PathEarlCore
                 // otherwise, we need to keep searching
                 foreach (int id in Nodes[cur].Keys)
                 {
-                    if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                    if (shape != null)
+                    {
+                        if (IsBlocked(id, layer, shape, radius))
+                            continue;
+                    }
+                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                         continue;
 
                     float nextdist = dists[cur] + Nodes[cur][id];
@@ -314,7 +445,7 @@ namespace PathEarlCore
             return path;
         }
 
-        public Dictionary<int, int> DjikstraFlowfield(int target, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null)
+        public Dictionary<int, int> DjikstraFlowfield(int target, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null, List<(float, float)> shape = null, float radius = 0.5f)
         {
             List<int> next = scratch.Next;
             next.Clear();
@@ -326,7 +457,12 @@ namespace PathEarlCore
             // first, put all the nodes in the list to be checked
             foreach (int id in Nodes.Keys)
             {
-                if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                if (shape != null)
+                {
+                    if (IsBlocked(id, layer, shape, radius))
+                        continue;
+                }
+                else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                     continue;
 
                 dists.Add(id, float.MaxValue); // start them all at max distance, we'll set the start
@@ -362,7 +498,12 @@ namespace PathEarlCore
 
                 foreach (int id in Nodes[cur].Keys)
                 {
-                    if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                    if (shape != null)
+                    {
+                        if (IsBlocked(id, layer, shape, radius))
+                            continue;
+                    }
+                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                         continue;
 
                     float nextdist = dists[cur] + Nodes[cur][id];
@@ -390,7 +531,7 @@ namespace PathEarlCore
                 Next = next;
             }
         }
-        public Dictionary<int, SearchResult> DjikstraSearch(int start, float min, float max, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null)
+        public Dictionary<int, SearchResult> DjikstraSearch(int start, float min, float max, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null, List<(float, float)> shape = null, float radius = 0.5f)
         {
             List<int> next = scratch.Next;
             next.Clear();
@@ -402,7 +543,12 @@ namespace PathEarlCore
             // first, put all the nodes in the list to be checked
             foreach (int id in Nodes.Keys)
             {
-                if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                if (shape != null)
+                {
+                    if (IsBlocked(id, layer, shape, radius))
+                        continue;
+                }
+                else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                     continue;
 
                 dists.Add(id, float.MaxValue); // start them all at max distance, we'll set the start
@@ -444,7 +590,12 @@ namespace PathEarlCore
 
                 foreach (int id in Nodes[cur].Keys)
                 {
-                    if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
+                    if (shape != null)
+                    {
+                        if (IsBlocked(id, layer, shape, radius))
+                            continue;
+                    }
+                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                         continue;
 
                     float curdist = dists[cur];
