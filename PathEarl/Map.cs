@@ -46,6 +46,8 @@ namespace PathEarlCore
             if (Quadhead == null)
             {
                 int maxNodes = NodeX.Count;
+                if (maxNodes < 10000)
+                    maxNodes = 10000;
                 Quadhead = new Quadhead<TileQuadEntry>(new TileQuadEntry(), 2f, maxNodes / 4, maxNodes);
                 Quadchecker = new Quadchecker<TileQuadEntry, QuadCollisionChecker>(Quadhead);
             }
@@ -130,6 +132,9 @@ namespace PathEarlCore
             UnusedInfo.AddRange(UsedInfo);
             UsedInfo.Clear();
             Info.Clear();
+
+            Quadhead.Clear();
+            QuadEntries.Clear();
         }
 
         public int AddNode(float x, float y, out T info)
