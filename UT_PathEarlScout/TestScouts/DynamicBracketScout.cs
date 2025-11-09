@@ -22,6 +22,7 @@ namespace UT_PathEarlScout.TestScouts
             Layer<BasicTileInfo> firstLayer = recycler.GetLayer();
             scout.Layers.Add(firstLayer);
             firstLayer.Name = "base";
+            firstLayer.AutoCollapse = true;
             AddRule(firstLayer.GlobalRules, "setup",
                 AlwaysCondition(),
                 (list) =>

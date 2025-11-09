@@ -470,6 +470,7 @@ namespace PathEarlScout.Optimizers
             bool hitAny = false;
             bool firstFailPass = true;
             List<int> currentList = TileList;
+            int runs = 0;
             for (int i = 0; i < currentList.Count; i++)
             {
                 int id = currentList[i];
@@ -567,7 +568,7 @@ namespace PathEarlScout.Optimizers
                 }
 
                 // if this had multiple keywords in the outcome set, add it back to the list
-                if (keycount > 1)
+                if (!layer.AutoCollapse && keycount > 1)
                 {
                     NextTileList.Add(id);
                 }
@@ -582,6 +583,7 @@ namespace PathEarlScout.Optimizers
                         TileList = currentList;
                         NextTileList.Clear();
                         i = 0;
+                        runs++;
                     } 
                     else if (FailedTileList.Count > 0 && (hitAny || firstFailPass))
                     {
@@ -594,6 +596,7 @@ namespace PathEarlScout.Optimizers
                         FailedTileList.Clear();
                         i = 0;
                         firstFailPass = false;
+                        runs++;
                     }
                     hitAny = false;
                 }

@@ -12,6 +12,7 @@ namespace PathEarlScout
         public List<Rule<T>> AutoRules;
         public List<Rule<T>> Rules;
         public int Repeats = 0;
+        public bool AutoCollapse = false;
 
         public Layer(ScoutRecycler<T> recycler) 
         {

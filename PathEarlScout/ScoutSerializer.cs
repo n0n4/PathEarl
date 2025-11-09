@@ -179,6 +179,10 @@ namespace PathEarlScout
                 Write("REPEATS ");
                 WriteLine(layer.Repeats.ToString());
             }
+            if (layer.AutoCollapse)
+            {
+                WriteLine("AUTOCOLLAPSE");
+            }
             if (layer.GlobalRules.Count > 0)
             {
                 WriteLine("GLOBAL");
@@ -218,6 +222,10 @@ namespace PathEarlScout
                     string repeatText = LastLine.Substring(8);
                     if (!int.TryParse(repeatText, out layer.Repeats))
                         throw new Exception("Failed to convert '" + repeatText + "' to int at line " + LineCount);
+                }
+                else if (lowered.StartsWith("autocollapse"))
+                {
+                    layer.AutoCollapse = true;
                 }
                 else if (lowered.StartsWith("global"))
                 {

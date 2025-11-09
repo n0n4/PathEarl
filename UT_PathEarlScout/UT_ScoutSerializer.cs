@@ -175,6 +175,8 @@ namespace UT_PathEarlScout
         public void AssertLayersAreEqual(Layer<BasicTileInfo> a, Layer<BasicTileInfo> b)
         {
             Assert.AreEqual(a.Name, b.Name);
+            Assert.AreEqual(a.Repeats, b.Repeats);
+            Assert.AreEqual(a.AutoCollapse, b.AutoCollapse);
             AssertRulesListAreEqual(a.AutoRules, b.AutoRules);
             AssertRulesListAreEqual(a.GlobalRules, b.GlobalRules);
             AssertRulesListAreEqual(a.Rules, b.Rules);
