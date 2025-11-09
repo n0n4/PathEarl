@@ -451,7 +451,7 @@ namespace PathEarlScout.Optimizers
                     if (rule.Condition.Evaluate(context))
                     {
                         foreach (Outcome<T> outcome in rule.Outcomes)
-                            ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                            ExecuteOutcome(infoAccess, tile, outcome, context);
                     }
                 }
 
@@ -460,7 +460,7 @@ namespace PathEarlScout.Optimizers
                     if (rule.Condition.Evaluate(context))
                     {
                         foreach (Outcome<T> outcome in rule.Outcomes)
-                            ExecuteOutcome(infoAccess, blankTile, outcome, context);
+                            ExecuteOutcome(infoAccess, tile, outcome, context);
                     }
                 }
             }

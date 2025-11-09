@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace UT_PathEarlViz
 {
     [TestClass]
-    public class UT_StrangeObjects
+    public class UT_PathingExamples
     {
         private byte[] BackColor = new byte[] { 0, 0, 0, 255 };
         private byte[] LineColor = new byte[] { 100, 100, 100, 255 };
@@ -91,6 +91,57 @@ namespace UT_PathEarlViz
             Assert.AreEqual(ids[3, 5], path[6]);
             Assert.AreEqual(ids[4, 5], path[7]);
             Assert.AreEqual(target, path[8]);
+        }
+
+        [TestMethod]
+        public void TestMap_PathTowardsOccupiedSquareTest()
+        {
+            Map<EmptyTileInfo> map = new Map<EmptyTileInfo>(EmptyTileInfo.Spawner);
+
+            // . > > v .
+            // . ^ X O .
+            // . O X 2 .
+            // . . X . .
+            // . . X . .
+
+            int[,] ids = map.GenerateGrid(5, 5, out EmptyTileInfo[,] infos, null);
+
+            int start = ids[1, 2];
+            int target = ids[3, 2];
+
+            map.Block(ids[2, 1], EMapLayer.Ground);
+            map.Block(ids[2, 2], EMapLayer.Ground);
+            map.Block(ids[2, 3], EMapLayer.Ground);
+            map.Block(ids[2, 4], EMapLayer.Ground);
+
+            map.Block(ids[3, 2], EMapLayer.Ground);
+
+            map.SetupQuad();
+
+            MapScratch<EmptyTileInfo> scratch = new MapScratch<EmptyTileInfo>();
+            Bitmap b = MapViz<EmptyTileInfo>.DrawMap(map, 20, BackColor, LineColor, Coloration);
+
+
+            var tempBlock = map.Blocks[target];
+            map.Blocks[target] = EMapLayer.None;
+            List<int> path = map.Djikstra(start, target, EMapLayer.Ground, scratch, null);
+            map.Blocks[target] = tempBlock;
+
+            MapViz<EmptyTileInfo>.DrawPath(b, map, path, new byte[] { 255, 0, 0, 255 }, 0);
+
+            byte[] shapeColor = new byte[] { 255, 0, 155, 255 };
+
+            b.ToDrawingBitmap().Save("./testpathtowardsoccupied.png");
+
+            // validate
+            Assert.AreEqual(7, path.Count);
+            Assert.AreEqual(start, path[0]);
+            Assert.AreEqual(ids[1, 1], path[1]);
+            Assert.AreEqual(ids[1, 0], path[2]);
+            Assert.AreEqual(ids[2, 0], path[3]);
+            Assert.AreEqual(ids[3, 0], path[4]);
+            Assert.AreEqual(ids[3, 1], path[5]);
+            Assert.AreEqual(target, path[6]);
         }
     }
 }
