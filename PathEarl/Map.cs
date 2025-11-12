@@ -371,13 +371,17 @@ namespace PathEarlCore
             // first, put all the nodes in the list to be checked
             foreach (int id in Nodes.Keys)
             {
-                if (shape != null)
-                {
-                    if (IsBlocked(id, layer, shape, radius))
+                // the start node is a freebie, we can always path out of our starting square
+                if (id != start) 
+                { 
+                    if (shape != null)
+                    {
+                        if (IsBlocked(id, layer, shape, radius))
+                            continue;
+                    }
+                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                         continue;
                 }
-                else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
-                    continue; 
 
                 dists.Add(id, float.MaxValue); // start them all at max distance, we'll set the start
                                                // node to 0 distance to force it to be first
@@ -428,13 +432,17 @@ namespace PathEarlCore
                 // otherwise, we need to keep searching
                 foreach (int id in Nodes[cur].Keys)
                 {
-                    if (shape != null)
+                    // the start node is a freebie, we can always path out of our starting square
+                    if (id != start)
                     {
-                        if (IsBlocked(id, layer, shape, radius))
+                        if (shape != null)
+                        {
+                            if (IsBlocked(id, layer, shape, radius))
+                                continue;
+                        }
+                        else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                             continue;
                     }
-                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
-                        continue;
 
                     float nextdist = dists[cur] + Nodes[cur][id];
                     if (cost != null)
@@ -548,13 +556,17 @@ namespace PathEarlCore
             // first, put all the nodes in the list to be checked
             foreach (int id in Nodes.Keys)
             {
-                if (shape != null)
+                // the start node is a freebie, we can always path out of our starting square
+                if (id != start)
                 {
-                    if (IsBlocked(id, layer, shape, radius))
+                    if (shape != null)
+                    {
+                        if (IsBlocked(id, layer, shape, radius))
+                            continue;
+                    }
+                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                         continue;
                 }
-                else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
-                    continue;
 
                 dists.Add(id, float.MaxValue); // start them all at max distance, we'll set the start
                                                // node to 0 distance to force it to be first
@@ -595,13 +607,17 @@ namespace PathEarlCore
 
                 foreach (int id in Nodes[cur].Keys)
                 {
-                    if (shape != null)
+                    // the start node is a freebie, we can always path out of our starting square
+                    if (id != start)
                     {
-                        if (IsBlocked(id, layer, shape, radius))
+                        if (shape != null)
+                        {
+                            if (IsBlocked(id, layer, shape, radius))
+                                continue;
+                        }
+                        else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
                             continue;
                     }
-                    else if (IsBlocked(id, layer)) // skip any nodes that are blocked on this layer
-                        continue;
 
                     float curdist = dists[cur];
                     float nextdist = curdist + Nodes[cur][id];
