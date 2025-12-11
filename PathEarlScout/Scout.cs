@@ -2,6 +2,7 @@
 using PathEarlScout.Optimizers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PathEarlScout
 {
@@ -27,6 +28,8 @@ namespace PathEarlScout
         public Dictionary<string, int> OutputInts = new Dictionary<string, int>();
         public Dictionary<string, float> OutputFloats = new Dictionary<string, float>();
         public Dictionary<string, string> OutputStrings = new Dictionary<string, string>();
+
+        public Dictionary<string, double> TimingReport = new Dictionary<string, double>();
 
         public Scout(Map<T> map, MapScratch<T> scratch, ScoutRecycler<T> recycler, InfoAccess<T> infoAccess)
         {
@@ -58,16 +61,29 @@ namespace PathEarlScout
             foreach (var kvp in InputStrings)
                 OutputStrings.Add(kvp.Key, kvp.Value);
 
+            TimingReport.Clear();
+            Stopwatch watch = new Stopwatch();
+
             // run each layer
             for (int i = 0; i < Repeats + 1; i++)
+            {
                 foreach (Layer<T> layer in Layers)
+                {
+                    watch.Start();
                     RunLayer(layer);
+                    watch.Stop();
+                    TimingReport[layer.Name] = TimingReport.TryGetValue(layer.Name, out var existingTime) ? existingTime + watch.ElapsedMilliseconds : watch.ElapsedMilliseconds;
+                    watch.Reset();
+                }
+            }
         }
 
         public void RunLayer(Layer<T> layer)
         {
             for (int i = 0; i < layer.Repeats + 1; i++)
+            {
                 Optimizer.RunLayer(this, layer, GlobalLayer);
+            }
         }
     }
 }

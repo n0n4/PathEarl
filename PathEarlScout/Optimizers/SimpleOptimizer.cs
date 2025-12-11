@@ -436,6 +436,7 @@ namespace PathEarlScout.Optimizers
 
             // put all tiles in random order
             TileList.Clear();
+            FailedTileList.Clear();
             TileList.AddRange(map.Nodes.Keys);
             for (int i = 0; i < 7; i++)
                 RandomHelper.Shuffle<int>(Random, TileList);
