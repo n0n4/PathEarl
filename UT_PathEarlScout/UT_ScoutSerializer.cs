@@ -3,6 +3,7 @@ using PathEarlCore;
 using PathEarlScout;
 using PathEarlScout.Conditions;
 using PathEarlScout.Keywords;
+using PathEarlScout.Structures;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,13 +24,17 @@ namespace UT_PathEarlScout
                 Rule<BasicTileInfo> ra = a[i];
                 Rule<BasicTileInfo> rb = b[i];
 
-                Assert.AreEqual(ra.Name, rb.Name);
-                AssertConditionsAreEqual(ra.Condition, rb.Condition);
-                Assert.AreEqual(ra.Outcomes.Count, rb.Outcomes.Count);
-                for (int o = 0; o < ra.Outcomes.Count; o++)
-                {
-                    AssertOutcomesAreEqual(ra.Outcomes[o], rb.Outcomes[o]);
-                }
+                AssertRulesAreEqual(ra, rb);
+            }
+        }
+        public void AssertRulesAreEqual(Rule<BasicTileInfo> ra, Rule<BasicTileInfo> rb)
+        {
+            Assert.AreEqual(ra.Name, rb.Name);
+            AssertConditionsAreEqual(ra.Condition, rb.Condition);
+            Assert.AreEqual(ra.Outcomes.Count, rb.Outcomes.Count);
+            for (int o = 0; o < ra.Outcomes.Count; o++)
+            {
+                AssertOutcomesAreEqual(ra.Outcomes[o], rb.Outcomes[o]);
             }
         }
 
@@ -46,6 +51,15 @@ namespace UT_PathEarlScout
 
         public void AssertConditionsAreEqual(ICondition<BasicTileInfo> a, ICondition<BasicTileInfo> b)
         {
+            if (a == null && b == null)
+                return;
+            if (a == null)
+                Assert.IsNull(b);
+            if (b == null)
+                Assert.IsNull(a);
+            if (a == null || b == null)
+                return;
+
             Assert.AreEqual(a.GetKeyword(), b.GetKeyword());
             if (a is ConditionIf<BasicTileInfo>)
             {
@@ -182,6 +196,59 @@ namespace UT_PathEarlScout
             AssertRulesListAreEqual(a.Rules, b.Rules);
         }
 
+        public void AssertStructuresListAreEqual(List<Structure<BasicTileInfo>> a, List<Structure<BasicTileInfo>> b)
+        {
+            Assert.AreEqual(a.Count, b.Count);
+
+            for (int i = 0; i < a.Count; i++)
+            {
+                Structure<BasicTileInfo> ra = a[i];
+                Structure<BasicTileInfo> rb = b[i];
+
+                Assert.AreEqual(ra.Name, rb.Name);
+                Assert.AreEqual(ra.MinPoints, rb.MinPoints);
+                Assert.AreEqual(ra.MaxPoints, rb.MaxPoints);
+                Assert.AreEqual(ra.Rarity, rb.Rarity);
+                Assert.AreEqual(ra.Repeats, rb.Repeats);
+                AssertConditionsAreEqual(ra.Condition, rb.Condition);
+                Assert.AreEqual(ra.Blocks.Count, rb.Blocks.Count);
+                for (int o = 0; o < ra.Blocks.Count; o++)
+                {
+                    AssertStructureBlocksAreEqual(ra.Blocks[o], rb.Blocks[o]);
+                }
+            }
+        }
+        public void AssertStructureBlocksAreEqual(StructureBlock<BasicTileInfo> a, StructureBlock<BasicTileInfo> b)
+        {
+            Assert.AreEqual(a.Name, b.Name);
+            Assert.AreEqual(a.Beam, b.Beam);
+            Assert.AreEqual(a.BeamMinDistance, b.BeamMinDistance);
+            Assert.AreEqual(a.BeamMaxDistance, b.BeamMaxDistance);
+            Assert.AreEqual(a.BeamInterval, b.BeamInterval);
+            Assert.AreEqual(a.BeamPathfinding, b.BeamPathfinding);
+            Assert.AreEqual(a.BeamWanderChance, b.BeamWanderChance);
+            Assert.AreEqual(a.BeamWanderRepeats, b.BeamWanderRepeats);
+            AssertConditionsAreEqual(a.BeamTargetCondition, b.BeamTargetCondition);
+            AssertConditionsAreEqual(a.BeamWanderCondition, b.BeamWanderCondition);
+            Assert.AreEqual(a.Cells.Count, b.Cells.Count);
+            for (int o = 0; o < a.Cells.Count; o++)
+            {
+                AssertStructureCellsAreEqual(a.Cells[o], b.Cells[o]);
+            }
+        }
+        public void AssertStructureCellsAreEqual(StructureCell<BasicTileInfo> a, StructureCell<BasicTileInfo> b)
+        {
+            Assert.AreEqual(a.Name, b.Name);
+            Assert.AreEqual(a.MinRadius, b.MinRadius);
+            Assert.AreEqual(a.Radius, b.Radius);
+            Assert.AreEqual(a.MinXOffset, b.MinXOffset);
+            Assert.AreEqual(a.MaxXOffset, b.MaxXOffset);
+            Assert.AreEqual(a.MinYOffset, b.MinYOffset);
+            Assert.AreEqual(a.MaxYOffset, b.MaxYOffset);
+
+            AssertRulesAreEqual(a.Rule, b.Rule);
+        }
+
         public static Scout<BasicTileInfo> SaveLoad(string name, Action<Scout<BasicTileInfo>> setup, out Scout<BasicTileInfo> scout)
         {
             Map<BasicTileInfo> map = BasicScout.MakeHexMap(50, 50, out BasicTileInfo[,] infos);
@@ -255,6 +322,15 @@ namespace UT_PathEarlScout
             SaveLoadTest("dynamic-bracket", (scout) =>
             {
                 DynamicBracketScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void Structure_SaveLoadTest()
+        {
+            SaveLoadTest("structure", (scout) =>
+            {
+                StructureScout.AddRules(scout);
             });
         }
     }

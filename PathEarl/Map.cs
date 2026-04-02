@@ -356,6 +356,26 @@ namespace PathEarlCore
             return ids;
         }
 
+        public int FindClosestConnectionToPoint(int start, float tx, float ty)
+        {
+            float bestDist = float.MaxValue;
+            int bestIndex = -1;
+
+            foreach (var conn in Nodes[start])
+            {
+                float x = NodeX[conn.Key];
+                float y = NodeY[conn.Key];
+                float dist = ((tx - x) * (tx - x)) + ((ty - y) * (ty - y));
+                if (dist < bestDist)
+                {
+                    bestIndex = conn.Key;
+                    bestDist = dist;
+                }
+            }
+
+            return bestIndex;
+        }
+
         // note: the cost method params are "from id", "to id", "distance", "from info", "to info"
         public List<int> Djikstra(int start, int end, EMapLayer layer, MapScratch<T> scratch, Func<int, int, float, T, T, float> cost = null, List<(float, float)> shape = null, float radius = 0.5f)
         {

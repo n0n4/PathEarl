@@ -1,8 +1,10 @@
 ﻿using PathEarlCore;
 using PathEarlScout.Conditions;
 using PathEarlScout.Keywords;
+using PathEarlScout.Structures;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Text;
 
@@ -193,6 +195,11 @@ namespace PathEarlScout
                 WriteLine("AUTO");
                 SaveRuleList(layer.AutoRules);
             }
+            if (layer.Structures.Count > 0)
+            {
+                WriteLine("STRUCTS");
+                SaveStructureList(layer.Structures);
+            }
             TabLevel--;
             SaveRuleList(layer.Rules);
         }
@@ -217,7 +224,7 @@ namespace PathEarlScout
             while (TryReadLine())
             {
                 string lowered = LastLine.ToLower();
-                if (lowered.StartsWith("repeats"))
+                if (lowered.StartsWith("repeat"))
                 {
                     string repeatText = LastLine.Substring(8);
                     if (!int.TryParse(repeatText, out layer.Repeats))
@@ -234,6 +241,10 @@ namespace PathEarlScout
                 else if (lowered.StartsWith("auto"))
                 {
                     LoadRuleList(layer.AutoRules);
+                }
+                else if (lowered.StartsWith("struct"))
+                {
+                    LoadStructureList(layer.Structures);
                 }
                 else
                 {
@@ -438,6 +449,505 @@ namespace PathEarlScout
                         outcome.Probability = keywordReturn.KeywordFloat;
                 }
             }
+        }
+
+        public void SaveStructureList(List<Structure<T>> list)
+        {
+            foreach (Structure<T> structure in list)
+                SaveStructure(structure);
+        }
+
+        public void LoadStructureList(List<Structure<T>> list)
+        {
+            while (TryReadLine())
+            {
+                UsedLastLine = false; // force line to be reused
+                Structure<T> structure = Scout.Recycler.GetStructure();
+                LoadStructure(structure);
+                list.Add(structure);
+            }
+        }
+
+        public void SaveStructure(Structure<T> structure)
+        {
+            Write("STRUCT ");
+            WriteLine(structure.Name);
+            TabLevel++;
+
+            if (structure.MinPoints != 1 || structure.MaxPoints != 1)
+            {
+                Write("POINTS ");
+                Write(structure.MinPoints.ToString());
+                Write("-");
+                WriteLine(structure.MaxPoints.ToString());
+            }
+            if (structure.Repeats != 0)
+            {
+                Write("REPEATS ");
+                WriteLine(structure.Repeats.ToString());
+            }
+            if (structure.Rarity != 1)
+            {
+                Write("RARITY ");
+                WriteLine(structure.Rarity.ToString());
+            }
+
+            // write condition
+            SaveCondition(structure.Condition);
+
+            // write blocks
+            SaveStructureBlockList(structure.Blocks);
+
+            TabLevel--;
+        }
+
+        public void LoadStructure(Structure<T> structure)
+        {
+            string ruleName = string.Empty;
+            if (!TryReadLine())
+                throw new Exception("Expected Structure at line " + LineCount);
+            if (LastLine.Length > 7)
+                ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
+            structure.Name = ruleName;
+            structure.MinPoints = 1;
+            structure.MaxPoints = 1;
+            structure.Rarity = 1;
+            structure.Repeats = 0;
+
+            TabLevel++;
+            while (TryReadLine())
+            {
+                string lowered = LastLine.ToLower();
+                if (lowered.StartsWith("repeat"))
+                {
+                    string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    if (!int.TryParse(repeatText, out structure.Repeats))
+                        throw new Exception("Failed to convert '" + repeatText + "' to int at line " + LineCount);
+                }
+                else if (lowered.StartsWith("rarity"))
+                {
+                    string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    if (!double.TryParse(repeatText, out structure.Rarity))
+                        throw new Exception("Failed to convert '" + repeatText + "' to double at line " + LineCount);
+                }
+                else if (lowered.StartsWith("point"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    string minRange = ParseHelper.ReadToken(rangeText, '-', 0);
+                    string maxRange = rangeText.Substring(rangeText.IndexOf('-') + 1);
+                    if (!int.TryParse(minRange, out structure.MinPoints))
+                        throw new Exception("Expected numerical Min Points at line " + LineCount);
+                    if (!int.TryParse(maxRange, out structure.MaxPoints))
+                        throw new Exception("Expected numerical Max Points at line " + LineCount);
+                }
+                else
+                {
+                    UsedLastLine = false;
+                    break;
+                }
+            }
+
+            structure.Condition = LoadCondition();
+            LoadStructureBlockList(structure.Blocks);
+            TabLevel--;
+        }
+
+        public void SaveStructureBlockList(List<StructureBlock<T>> list)
+        {
+            foreach (StructureBlock<T> block in list)
+                SaveStructureBlock(block);
+        }
+
+        public void LoadStructureBlockList(List<StructureBlock<T>> list)
+        {
+            while (TryReadLine())
+            {
+                UsedLastLine = false; // force line to be reused
+                StructureBlock<T> block = Scout.Recycler.GetStructureBlock();
+                LoadStructureBlock(block);
+                list.Add(block);
+            }
+        }
+
+        public void SaveStructureBlock(StructureBlock<T> block)
+        {
+            Write("BLOCK ");
+            WriteLine(block.Name);
+            TabLevel++;
+
+            if (block.Beam)
+            {
+                WriteLine("BEAM");
+                TabLevel++;
+
+                if (block.BeamTargetCondition != null)
+                {
+                    SaveCondition(block.BeamTargetCondition);
+                }
+
+                Write("DISTANCE ");
+                Write(block.BeamMinDistance.ToString());
+                Write("-");
+                WriteLine(block.BeamMaxDistance.ToString());
+
+                if (block.BeamInterval != 1)
+                {
+                    Write("INTERVAL ");
+                    WriteLine(block.BeamInterval.ToString());
+                }
+
+                if (block.BeamPathfinding != StructureBlock<T>.BEAM_PATHFINDING_SIMPLE)
+                {
+                    Write("PATHING ");
+                    WriteLine(block.BeamPathfinding);
+                }
+
+                if (block.BeamWanderChance != 0)
+                {
+                    WriteLine("WANDER");
+                    TabLevel++;
+
+                    if (block.BeamWanderCondition != null)
+                    {
+                        SaveCondition(block.BeamWanderCondition);
+                    }
+
+                    Write("CHANCE ");
+                    WriteLine(block.BeamWanderChance.ToString());
+
+                    if (block.BeamWanderRepeats != 0)
+                    {
+                        Write("REPEATS ");
+                        WriteLine(block.BeamWanderRepeats.ToString());
+                    }
+
+                    TabLevel--;
+                }
+
+
+                TabLevel--;
+            }
+
+            // write cells
+            SaveStructureCellList(block.Cells);
+
+            TabLevel--;
+        }
+
+        public void LoadStructureBlock(StructureBlock<T> block)
+        {
+            string ruleName = string.Empty;
+            if (!TryReadLine())
+                throw new Exception("Expected Block at line " + LineCount);
+            if (LastLine.Length > 6)
+                ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
+            block.Name = ruleName;
+            block.BeamPathfinding = StructureBlock<T>.BEAM_PATHFINDING_SIMPLE;
+            block.BeamInterval = 1;
+            block.BeamWanderChance = 0;
+            block.BeamWanderRepeats = 0;
+
+            TabLevel++;
+            while (TryReadLine())
+            {
+                string lowered = LastLine.ToLower();
+                if (lowered.StartsWith("beam"))
+                {
+                    TabLevel++;
+
+                    while (TryReadLine())
+                    {
+                        lowered = LastLine.ToLower();
+                        if (lowered.StartsWith("? "))
+                        {
+                            UsedLastLine = false;
+                            block.BeamTargetCondition = LoadCondition();
+                        }
+                        else if (lowered.StartsWith("distance"))
+                        {
+                            string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                            string minRange = ParseHelper.ReadToken(rangeText, '-', 0);
+                            string maxRange = rangeText.Substring(rangeText.IndexOf('-') + 1);
+                            if (!int.TryParse(minRange, out block.BeamMinDistance))
+                                throw new Exception("Expected numerical Min Beam Distance at line " + LineCount);
+                            if (!int.TryParse(maxRange, out block.BeamMaxDistance))
+                                throw new Exception("Expected numerical Max Beam Distance at line " + LineCount);
+                        }
+                        else if (lowered.StartsWith("interval"))
+                        {
+                            string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                            if (!int.TryParse(repeatText, out block.BeamInterval))
+                                throw new Exception("Failed to convert '" + repeatText + "' to int at line " + LineCount);
+                        }
+                        else if (lowered.StartsWith("pathing"))
+                        {
+                            string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                            block.BeamPathfinding = repeatText;
+                        }
+                        else if (lowered.StartsWith("wander"))
+                        {
+                            TabLevel++;
+
+                            while (TryReadLine())
+                            {
+                                lowered = LastLine.ToLower();
+                                if (lowered.StartsWith("? "))
+                                {
+                                    UsedLastLine = false;
+                                    block.BeamWanderCondition = LoadCondition();
+                                }
+                                else if (lowered.StartsWith("chance"))
+                                {
+                                    string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                                    if (!double.TryParse(repeatText, out block.BeamWanderChance))
+                                        throw new Exception("Failed to convert '" + repeatText + "' to double at line " + LineCount);
+                                }
+                                else if (lowered.StartsWith("repeat"))
+                                {
+                                    string repeatText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                                    if (!int.TryParse(repeatText, out block.BeamWanderRepeats))
+                                        throw new Exception("Failed to convert '" + repeatText + "' to int at line " + LineCount);
+                                }
+                                else
+                                {
+                                    UsedLastLine = false;
+                                    break;
+                                }
+                            }
+
+                            TabLevel--;
+                        }
+                        else
+                        {
+                            UsedLastLine = false;
+                            break;
+                        }
+                    }
+
+                    TabLevel--;
+                }
+                else 
+                {
+                    UsedLastLine = false;
+                    break;
+                }
+            }
+
+            LoadStructureCellList(block.Cells);
+            TabLevel--;
+        }
+
+        public void SaveStructureCellList(List<StructureCell<T>> list)
+        {
+            foreach (StructureCell<T> cell in list)
+                SaveStructureCell(cell);
+        }
+
+        public void LoadStructureCellList(List<StructureCell<T>> list)
+        {
+            while (TryReadLine())
+            {
+                UsedLastLine = false; // force line to be reused
+                StructureCell<T> cell = Scout.Recycler.GetStructureCell();
+                LoadStructureCell(cell);
+                list.Add(cell);
+            }
+        }
+
+        public void SaveStructureCell(StructureCell<T> cell)
+        {
+            Write("CELL ");
+            WriteLine(cell.Name);
+            TabLevel++;
+
+            Write("RADIUS ");
+            Write(cell.MinRadius.ToString());
+            Write("-");
+            WriteLine(cell.Radius.ToString());
+
+            if (cell.MinXOffset != float.MinValue || cell.MaxXOffset != float.MaxValue)
+            {
+                Write("XRANGE ");
+                Write(cell.MinXOffset.ToString());
+                Write("-");
+                WriteLine(cell.MaxXOffset.ToString());
+            }
+
+            if (cell.MinYOffset != float.MinValue || cell.MaxYOffset != float.MaxValue)
+            {
+                Write("YRANGE ");
+                Write(cell.MinYOffset.ToString());
+                Write("-");
+                WriteLine(cell.MaxYOffset.ToString());
+            }
+
+            SaveStructureRuleList(cell.Rules);
+
+            TabLevel--;
+        }
+
+        public void LoadStructureCell(StructureCell<T> cell)
+        {
+            string ruleName = string.Empty;
+            if (!TryReadLine())
+                throw new Exception("Expected Cell at line " + LineCount);
+            if (LastLine.Length > 5)
+                ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
+            cell.Name = ruleName;
+
+            cell.MinXOffset = float.MinValue;
+            cell.MaxXOffset = float.MaxValue;
+
+            cell.MinYOffset = float.MinValue;
+            cell.MaxYOffset = float.MaxValue;
+
+            TabLevel++;
+            while (TryReadLine())
+            {
+                string lowered = LastLine.ToLower();
+                if (lowered.StartsWith("radius"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!int.TryParse(minRange, out cell.MinRadius))
+                        throw new Exception("Expected numerical Min Radius at line " + LineCount);
+                    if (!int.TryParse(maxRange, out cell.Radius))
+                        throw new Exception("Expected numerical Max Radius at line " + LineCount);
+                }
+                else if (lowered.StartsWith("xrange"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!float.TryParse(minRange, out cell.MinXOffset))
+                        throw new Exception("Expected numerical Min X Range at line " + LineCount);
+                    if (!float.TryParse(maxRange, out cell.MaxXOffset))
+                        throw new Exception("Expected numerical Max X Range at line " + LineCount);
+                }
+                else if (lowered.StartsWith("yrange"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!float.TryParse(minRange, out cell.MinYOffset))
+                        throw new Exception("Expected numerical Min Y Range at line " + LineCount);
+                    if (!float.TryParse(maxRange, out cell.MaxYOffset))
+                        throw new Exception("Expected numerical Max Y Range at line " + LineCount);
+                }
+                else
+                {
+                    UsedLastLine = false;
+                    break;
+                }
+            }
+
+            LoadStructureRuleList(cell.Rules);
+            TabLevel--;
+        }
+
+        public void SaveStructureRuleList(List<StructureRule<T>> list)
+        {
+            foreach (StructureRule<T> cell in list)
+                SaveStructureRule(cell);
+        }
+
+        public void LoadStructureRuleList(List<StructureRule<T>> list)
+        {
+            while (TryReadLine())
+            {
+                UsedLastLine = false; // force line to be reused
+                StructureRule<T> cell = Scout.Recycler.GetStructureRule();
+                LoadStructureRule(cell);
+                list.Add(cell);
+            }
+        }
+
+        public void SaveStructureRule(StructureRule<T> cell)
+        {
+            Write("CELL ");
+            WriteLine(cell.Rule.Name);
+            TabLevel++;
+
+            Write("RADIUS ");
+            Write(cell.MinRadius.ToString());
+            Write("-");
+            WriteLine(cell.Radius.ToString());
+
+            if (cell.MinXOffset != float.MinValue || cell.MaxXOffset != float.MaxValue)
+            {
+                Write("XRANGE ");
+                Write(cell.MinXOffset.ToString());
+                Write("-");
+                WriteLine(cell.MaxXOffset.ToString());
+            }
+
+            if (cell.MinYOffset != float.MinValue || cell.MaxYOffset != float.MaxValue)
+            {
+                Write("YRANGE ");
+                Write(cell.MinYOffset.ToString());
+                Write("-");
+                WriteLine(cell.MaxYOffset.ToString());
+            }
+
+            SaveRule(cell.Rule);
+
+            TabLevel--;
+        }
+
+        public void LoadStructureRule(StructureRule<T> cell)
+        {
+            string ruleName = string.Empty;
+            if (!TryReadLine())
+                throw new Exception("Expected Structure Rule at line " + LineCount);
+            if (LastLine.Length > 5)
+                ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
+            cell.Rule.Name = ruleName;
+
+            cell.MinXOffset = float.MinValue;
+            cell.MaxXOffset = float.MaxValue;
+
+            cell.MinYOffset = float.MinValue;
+            cell.MaxYOffset = float.MaxValue;
+
+            TabLevel++;
+            while (TryReadLine())
+            {
+                string lowered = LastLine.ToLower();
+                if (lowered.StartsWith("radius"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!int.TryParse(minRange, out cell.MinRadius))
+                        throw new Exception("Expected numerical Min Radius at line " + LineCount);
+                    if (!int.TryParse(maxRange, out cell.Radius))
+                        throw new Exception("Expected numerical Max Radius at line " + LineCount);
+                }
+                else if (lowered.StartsWith("xrange"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!float.TryParse(minRange, out cell.MinXOffset))
+                        throw new Exception("Expected numerical Min X Range at line " + LineCount);
+                    if (!float.TryParse(maxRange, out cell.MaxXOffset))
+                        throw new Exception("Expected numerical Max X Range at line " + LineCount);
+                }
+                else if (lowered.StartsWith("yrange"))
+                {
+                    string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                    ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
+                    if (!float.TryParse(minRange, out cell.MinYOffset))
+                        throw new Exception("Expected numerical Min Y Range at line " + LineCount);
+                    if (!float.TryParse(maxRange, out cell.MaxYOffset))
+                        throw new Exception("Expected numerical Max Y Range at line " + LineCount);
+                }
+                else
+                {
+                    UsedLastLine = false;
+                    break;
+                }
+            }
+
+            cell.Rule.Condition = LoadCondition();
+            LoadOutcomeList(cell.Rule.Outcomes);
+            TabLevel--;
         }
     }
 }

@@ -114,6 +114,15 @@ namespace UT_PathEarlScout
         }
 
         [TestMethod]
+        public void Structure_RunTest()
+        {
+            RunTest("structure", 100, 100, (scout) =>
+            {
+                StructureScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
         public void StandardMap_SaveLoadRunTest()
         {
             SaveLoadRunTest("standard-map", 100, 100, (scout) =>
@@ -137,6 +146,15 @@ namespace UT_PathEarlScout
             SaveLoadRunTest("dynamic-bracket", 100, 100, (scout) =>
             {
                 DynamicBracketScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void Structure_SaveLoadRunTest()
+        {
+            SaveLoadRunTest("structure", 100, 100, (scout) =>
+            {
+                StructureScout.AddRules(scout);
             });
         }
     }

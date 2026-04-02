@@ -2,6 +2,7 @@
 using PathEarlScout.Conditions;
 using PathEarlScout.Keywords;
 using PathEarlScout.Optimizers;
+using PathEarlScout.Structures;
 using RelaStructures;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,30 @@ namespace PathEarlScout
 
         public List<List<Rule<T>>> UsedRuleLists = new List<List<Rule<T>>>();
         public List<List<Rule<T>>> UnusedRuleLists = new List<List<Rule<T>>>();
+
+        public List<Structure<T>> UsedStructures = new List<Structure<T>>();
+        public List<Structure<T>> UnusedStructures = new List<Structure<T>>();
+
+        public List<List<Structure<T>>> UsedStructureLists = new List<List<Structure<T>>>();
+        public List<List<Structure<T>>> UnusedStructureLists = new List<List<Structure<T>>>();
+
+        public List<StructureBlock<T>> UsedStructureBlocks = new List<StructureBlock<T>>();
+        public List<StructureBlock<T>> UnusedStructureBlocks = new List<StructureBlock<T>>();
+
+        public List<List<StructureBlock<T>>> UsedStructureBlockLists = new List<List<StructureBlock<T>>>();
+        public List<List<StructureBlock<T>>> UnusedStructureBlockLists = new List<List<StructureBlock<T>>>();
+
+        public List<StructureCell<T>> UsedStructureCells = new List<StructureCell<T>>();
+        public List<StructureCell<T>> UnusedStructureCells = new List<StructureCell<T>>();
+
+        public List<List<StructureCell<T>>> UsedStructureCellLists = new List<List<StructureCell<T>>>();
+        public List<List<StructureCell<T>>> UnusedStructureCellLists = new List<List<StructureCell<T>>>();
+
+        public List<StructureRule<T>> UsedStructureRules = new List<StructureRule<T>>();
+        public List<StructureRule<T>> UnusedStructureRules = new List<StructureRule<T>>();
+
+        public List<List<StructureRule<T>>> UsedStructureRuleLists = new List<List<StructureRule<T>>>();
+        public List<List<StructureRule<T>>> UnusedStructureRuleLists = new List<List<StructureRule<T>>>();
 
         public ListPool<KeywordContext<T>> KeywordContextPool;
         public ListPool<KeywordFloat<T>> KeywordFloatPool;
@@ -262,6 +287,211 @@ namespace PathEarlScout
 
             UsedRuleLists.Remove(list);
             UnusedRuleLists.Add(list);
+        }
+
+        public Structure<T> GetStructure()
+        {
+            Structure<T> result;
+            if (UnusedStructures.Count > 0)
+            {
+                result = UnusedStructures[0];
+                UnusedStructures.RemoveAt(0);
+                UsedStructures.Add(result);
+                return result;
+            }
+
+            result = new Structure<T>(this);
+            UsedStructures.Add(result);
+            return result;
+        }
+
+        public void ReturnStructure(Structure<T> structure)
+        {
+            structure.Clear(this);
+            UnusedStructures.Add(structure);
+            UsedStructures.Remove(structure);
+        }
+
+        public List<Structure<T>> GetStructureList()
+        {
+            List<Structure<T>> result;
+            if (UnusedStructureLists.Count > 0)
+            {
+                result = UnusedStructureLists[0];
+                UnusedStructureLists.RemoveAt(0);
+                UsedStructureLists.Add(result);
+                return result;
+            }
+
+            result = new List<Structure<T>>();
+            UsedStructureLists.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureList(List<Structure<T>> list)
+        {
+            foreach (Structure<T> rule in list)
+            {
+                ReturnStructure(rule);
+            }
+            list.Clear();
+
+            UsedStructureLists.Remove(list);
+            UnusedStructureLists.Add(list);
+        }
+
+
+        public StructureBlock<T> GetStructureBlock()
+        {
+            StructureBlock<T> result;
+            if (UnusedStructureBlocks.Count > 0)
+            {
+                result = UnusedStructureBlocks[0];
+                UnusedStructureBlocks.RemoveAt(0);
+                UsedStructureBlocks.Add(result);
+                return result;
+            }
+
+            result = new StructureBlock<T>(this);
+            UsedStructureBlocks.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureBlock(StructureBlock<T> structure)
+        {
+            structure.Clear(this);
+            UnusedStructureBlocks.Add(structure);
+            UsedStructureBlocks.Remove(structure);
+        }
+
+        public List<StructureBlock<T>> GetStructureBlockList()
+        {
+            List<StructureBlock<T>> result;
+            if (UnusedStructureBlockLists.Count > 0)
+            {
+                result = UnusedStructureBlockLists[0];
+                UnusedStructureBlockLists.RemoveAt(0);
+                UsedStructureBlockLists.Add(result);
+                return result;
+            }
+
+            result = new List<StructureBlock<T>>();
+            UsedStructureBlockLists.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureBlockList(List<StructureBlock<T>> list)
+        {
+            foreach (StructureBlock<T> rule in list)
+            {
+                ReturnStructureBlock(rule);
+            }
+            list.Clear();
+
+            UsedStructureBlockLists.Remove(list);
+            UnusedStructureBlockLists.Add(list);
+        }
+
+        public StructureCell<T> GetStructureCell()
+        {
+            StructureCell<T> result;
+            if (UnusedStructureCells.Count > 0)
+            {
+                result = UnusedStructureCells[0];
+                UnusedStructureCells.RemoveAt(0);
+                UsedStructureCells.Add(result);
+                return result;
+            }
+
+            result = new StructureCell<T>(this);
+            UsedStructureCells.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureCell(StructureCell<T> structure)
+        {
+            structure.Clear(this);
+            UnusedStructureCells.Add(structure);
+            UsedStructureCells.Remove(structure);
+        }
+
+        public List<StructureCell<T>> GetStructureCellList()
+        {
+            List<StructureCell<T>> result;
+            if (UnusedStructureCellLists.Count > 0)
+            {
+                result = UnusedStructureCellLists[0];
+                UnusedStructureCellLists.RemoveAt(0);
+                UsedStructureCellLists.Add(result);
+                return result;
+            }
+
+            result = new List<StructureCell<T>>();
+            UsedStructureCellLists.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureCellList(List<StructureCell<T>> list)
+        {
+            foreach (StructureCell<T> rule in list)
+            {
+                ReturnStructureCell(rule);
+            }
+            list.Clear();
+
+            UsedStructureCellLists.Remove(list);
+            UnusedStructureCellLists.Add(list);
+        }
+
+        public List<StructureRule<T>> GetStructureRuleList()
+        {
+            List<StructureRule<T>> result;
+            if (UnusedStructureRuleLists.Count > 0)
+            {
+                result = UnusedStructureRuleLists[0];
+                UnusedStructureRuleLists.RemoveAt(0);
+                UsedStructureRuleLists.Add(result);
+                return result;
+            }
+
+            result = new List<StructureRule<T>>();
+            UsedStructureRuleLists.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureRuleList(List<StructureRule<T>> list)
+        {
+            foreach (StructureRule<T> rule in list)
+            {
+                ReturnStructureRule(rule);
+            }
+            list.Clear();
+
+            UsedStructureRuleLists.Remove(list);
+            UnusedStructureRuleLists.Add(list);
+        }
+
+        public StructureRule<T> GetStructureRule()
+        {
+            StructureRule<T> result;
+            if (UnusedStructureRules.Count > 0)
+            {
+                result = UnusedStructureRules[0];
+                UnusedStructureRules.RemoveAt(0);
+                UsedStructureRules.Add(result);
+                return result;
+            }
+
+            result = new StructureRule<T>(this);
+            UsedStructureRules.Add(result);
+            return result;
+        }
+
+        public void ReturnStructureRule(StructureRule<T> structure)
+        {
+            structure.Clear(this);
+            UnusedStructureRules.Add(structure);
+            UsedStructureRules.Remove(structure);
         }
 
         public IOptimizer<T> GetOptimizer(string keyword)

@@ -26,6 +26,7 @@ namespace UT_PathEarlScout
         };
         public static Dictionary<string, int> TileNameToType = new Dictionary<string, int>()
         {
+            {"", 0 },
             {"void", 0 },
             {"grass", 1 },
             {"dirt", 2 },
@@ -42,6 +43,7 @@ namespace UT_PathEarlScout
         };
         public static Dictionary<string, string> TileTypeToArchetype = new Dictionary<string, string>()
         {
+            {"", "none" },
             {"void", "none" },
             {"grass", "ground" },
             {"dirt", "ground" },

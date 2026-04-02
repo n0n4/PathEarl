@@ -112,5 +112,20 @@ namespace PathEarlScout
                 pos--;
             return pos;
         }
+
+        public static void ReadRange(string body, out string min, out string max)
+        {
+            if (body.StartsWith("-"))
+            {
+                int dashIndex = body.IndexOf('-', 1);
+                min = body.Substring(0, dashIndex);
+                max = body.Substring(dashIndex + 1);
+            }
+            else
+            {
+                min = ReadToken(body, '-', 0);
+                max = body.Substring(body.IndexOf('-') + 1);
+            }
+        }
     }
 }
