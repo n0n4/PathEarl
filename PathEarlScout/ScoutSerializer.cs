@@ -277,19 +277,25 @@ namespace PathEarlScout
             TabLevel--;
         }
 
-        public void SaveRule(Rule<T> rule)
+        public void SaveRule(Rule<T> rule, bool skipName = false)
         {
-            Write("RULE ");
-            WriteLine(rule.Name);
-            TabLevel++;
+            if (!skipName)
+            {
+                Write("RULE ");
+                WriteLine(rule.Name);
+                TabLevel++;
+            }
 
             // write condition
             SaveCondition(rule.Condition);
 
             // write outcomes
             SaveOutcomeList(rule.Outcomes);
-            
-            TabLevel--;
+
+            if (!skipName)
+            {
+                TabLevel--;
+            }
         }
 
         public void LoadRule(Rule<T> rule)
@@ -862,16 +868,19 @@ namespace PathEarlScout
 
         public void SaveStructureRule(StructureRule<T> cell)
         {
-            Write("CELL ");
+            Write("RULE ");
             WriteLine(cell.Rule.Name);
             TabLevel++;
 
-            Write("RADIUS ");
-            Write(cell.MinRadius.ToString());
-            Write("-");
-            WriteLine(cell.Radius.ToString());
+            if (cell.MinRadius != null || cell.Radius != null)
+            {
+                Write("RADIUS ");
+                Write(cell.MinRadius.ToString());
+                Write("-");
+                WriteLine(cell.Radius.ToString());
+            }
 
-            if (cell.MinXOffset != float.MinValue || cell.MaxXOffset != float.MaxValue)
+            if (cell.MinXOffset != null || cell.MaxXOffset != null)
             {
                 Write("XRANGE ");
                 Write(cell.MinXOffset.ToString());
@@ -879,7 +888,7 @@ namespace PathEarlScout
                 WriteLine(cell.MaxXOffset.ToString());
             }
 
-            if (cell.MinYOffset != float.MinValue || cell.MaxYOffset != float.MaxValue)
+            if (cell.MinYOffset != null || cell.MaxYOffset != null)
             {
                 Write("YRANGE ");
                 Write(cell.MinYOffset.ToString());
@@ -887,7 +896,7 @@ namespace PathEarlScout
                 WriteLine(cell.MaxYOffset.ToString());
             }
 
-            SaveRule(cell.Rule);
+            SaveRule(cell.Rule, skipName: true);
 
             TabLevel--;
         }
@@ -901,11 +910,14 @@ namespace PathEarlScout
                 ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
             cell.Rule.Name = ruleName;
 
-            cell.MinXOffset = float.MinValue;
-            cell.MaxXOffset = float.MaxValue;
+            cell.MinRadius = null;
+            cell.Radius = null;
 
-            cell.MinYOffset = float.MinValue;
-            cell.MaxYOffset = float.MaxValue;
+            cell.MinXOffset = null;
+            cell.MaxXOffset = null;
+
+            cell.MinYOffset = null;
+            cell.MaxYOffset = null;
 
             TabLevel++;
             while (TryReadLine())
@@ -913,30 +925,45 @@ namespace PathEarlScout
                 string lowered = LastLine.ToLower();
                 if (lowered.StartsWith("radius"))
                 {
+                    cell.MinRadius = 0;
+                    cell.Radius = 0;
                     string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
                     ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
-                    if (!int.TryParse(minRange, out cell.MinRadius))
+                    if (!int.TryParse(minRange, out int minRadius))
                         throw new Exception("Expected numerical Min Radius at line " + LineCount);
-                    if (!int.TryParse(maxRange, out cell.Radius))
+                    cell.MinRadius = minRadius;
+
+                    if (!int.TryParse(maxRange, out int radius))
                         throw new Exception("Expected numerical Max Radius at line " + LineCount);
+                    cell.Radius = radius;
                 }
                 else if (lowered.StartsWith("xrange"))
                 {
+                    cell.MinXOffset = float.MinValue;
+                    cell.MaxXOffset = float.MaxValue;
                     string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
                     ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
-                    if (!float.TryParse(minRange, out cell.MinXOffset))
+                    if (!float.TryParse(minRange, out float minoff))
                         throw new Exception("Expected numerical Min X Range at line " + LineCount);
-                    if (!float.TryParse(maxRange, out cell.MaxXOffset))
+                    cell.MinXOffset = minoff;
+
+                    if (!float.TryParse(maxRange, out float maxoff))
                         throw new Exception("Expected numerical Max X Range at line " + LineCount);
+                    cell.MaxXOffset = maxoff;
                 }
                 else if (lowered.StartsWith("yrange"))
                 {
+                    cell.MinYOffset = float.MinValue;
+                    cell.MaxYOffset = float.MaxValue;
                     string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
                     ParseHelper.ReadRange(rangeText, out string minRange, out string maxRange);
-                    if (!float.TryParse(minRange, out cell.MinYOffset))
+                    if (!float.TryParse(minRange, out float minoff))
                         throw new Exception("Expected numerical Min Y Range at line " + LineCount);
-                    if (!float.TryParse(maxRange, out cell.MaxYOffset))
+                    cell.MinYOffset = minoff;
+
+                    if (!float.TryParse(maxRange, out float maxoff))
                         throw new Exception("Expected numerical Max Y Range at line " + LineCount);
+                    cell.MaxYOffset = maxoff;
                 }
                 else
                 {

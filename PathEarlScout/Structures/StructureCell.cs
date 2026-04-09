@@ -19,9 +19,6 @@ namespace PathEarlScout.Structures
         // e.g. could make a square by defining a large radius and then setting a min/max xy offset
         // that is a square within that radius
 
-
-        todo: // how to make it so that you can have different rules per different radius brackets?
-            // or different rules for different x/y offsets?
         public List<StructureRule<T>> Rules = new List<StructureRule<T>>();
         public StructureCell(ScoutRecycler<T> recycler)
         {

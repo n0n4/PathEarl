@@ -29,7 +29,6 @@ namespace PathEarlScout.Optimizers
         private List<KeywordName> ScratchNames = new List<KeywordName>();
         private List<string> ScratchStrings2 = new List<string>();
         private List<int> ScratchInts = new List<int>();
-        private List<int> ScratchInts2 = new List<int>();
         private List<float> ScratchFloats = new List<float>();
         private MapScratch<T> MapScratch = new MapScratch<T>();
         private Dictionary<int, int> ScratchIntDict = new Dictionary<int, int>();
@@ -876,33 +875,48 @@ namespace PathEarlScout.Optimizers
                 list.Add(kvp.Key);
             }
 
-            for (int i = 0; i < maxRadius; i++)
+            // execute each rule over the whole set, one after the other
+            foreach (var rule in cell.Rules)
             {
-                if (!ScratchIntListDict.TryGetValue(i, out List<int> list) || list == null)
-                    continue;
-
-                foreach (int index in list)
+                for (int i = 0; i < maxRadius; i++)
                 {
-                    ExecuteStructureCellRule(scout, cell, context, index, i, centerX, centerY);
+                    if (rule.MinRadius != null && i < rule.MinRadius)
+                        continue;
+                    if (rule.Radius != null && i > rule.Radius)
+                        continue;
+
+                    if (!ScratchIntListDict.TryGetValue(i, out List<int> list) || list == null)
+                        continue;
+
+                    foreach (int index in list)
+                    {
+                        ExecuteStructureCellRule(scout, cell, rule, context, index, i, centerX, centerY);
+                    }
                 }
             }
         }
 
-        private void ExecuteStructureCellRule(Scout<T> scout, StructureCell<T> cell, KeywordContext<T> context, int tileId, int currentRadius, float centerX, float centerY)
+        private void ExecuteStructureCellRule(Scout<T> scout, StructureCell<T> cell, StructureRule<T> cellrule, KeywordContext<T> context, int tileId, int currentRadius, float centerX, float centerY)
         {
             float x = scout.Map.NodeX[tileId] - centerX;
             float y = scout.Map.NodeY[tileId] - centerY;
-            if (currentRadius + 1 >= cell.MinRadius && currentRadius + 1 <= cell.Radius
-                && x >= cell.MinXOffset && x <= cell.MaxXOffset && y >= cell.MinYOffset && y <= cell.MaxYOffset)
+            int minRadius = cellrule.MinRadius ?? cell.MinRadius;
+            int radius = cellrule.Radius ?? cell.Radius;
+            float minXOffset = cellrule.MinXOffset ?? cell.MinXOffset;
+            float maxXOffset = cellrule.MaxXOffset ?? cell.MaxXOffset;
+            float minYOffset = cellrule.MinYOffset ?? cell.MinYOffset;
+            float maxYOffset = cellrule.MaxYOffset ?? cell.MaxYOffset;
+
+            if (currentRadius + 1 >= minRadius && currentRadius + 1 <= radius
+                && x >= minXOffset && x <= maxXOffset && y >= minYOffset && y <= maxYOffset)
             {
-                ScratchInts2.Add(tileId);
                 context.Clear();
                 var tile = context.Setup(scout.Map, scout.InfoAccess, tileId);
-                if (cell.Rule.Condition == null || cell.Rule.Condition.Evaluate(context))
+                if (cellrule.Rule.Condition == null || cellrule.Rule.Condition.Evaluate(context))
                 {
                     float sum = 0;
                     ScratchFloats.Clear();
-                    foreach (var outcome in cell.Rule.Outcomes)
+                    foreach (var outcome in cellrule.Rule.Outcomes)
                     {
                         var prob = outcome.GetProbability(context);
                         sum += prob;
@@ -914,13 +928,13 @@ namespace PathEarlScout.Optimizers
 
                     double r = Random.NextDouble() * sum;
                     float currentSum = 0;
-                    for (int i = 0; i < cell.Rule.Outcomes.Count; i++)
+                    for (int i = 0; i < cellrule.Rule.Outcomes.Count; i++)
                     {
                         currentSum += ScratchFloats[i];
                         if (r >= currentSum)
                             continue;
 
-                        ExecuteOutcome(scout.InfoAccess, tile, cell.Rule.Outcomes[i], context);
+                        ExecuteOutcome(scout.InfoAccess, tile, cellrule.Rule.Outcomes[i], context);
                         break;
                     }
                 }

@@ -4,12 +4,12 @@ namespace PathEarlScout.Structures
 {
     public class StructureRule<T> where T : ITileInfo
     {
-        public int MinRadius = 0;
-        public int Radius = 0;
-        public float MinXOffset = float.MinValue;
-        public float MaxXOffset = float.MaxValue;
-        public float MinYOffset = float.MinValue;
-        public float MaxYOffset = float.MaxValue;
+        public int? MinRadius = null;
+        public int? Radius = null;
+        public float? MinXOffset = null;
+        public float? MaxXOffset = null;
+        public float? MinYOffset = null;
+        public float? MaxYOffset = null;
 
         public Rule<T> Rule;
         public StructureRule(ScoutRecycler<T> recycler)

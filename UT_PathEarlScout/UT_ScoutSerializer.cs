@@ -246,6 +246,21 @@ namespace UT_PathEarlScout
             Assert.AreEqual(a.MinYOffset, b.MinYOffset);
             Assert.AreEqual(a.MaxYOffset, b.MaxYOffset);
 
+            Assert.AreEqual(a.Rules.Count, b.Rules.Count);
+            for (int o = 0; o < a.Rules.Count; o++)
+            {
+                AssertStructureCellRulesAreEqual(a.Rules[o], b.Rules[o]);
+            }
+        }
+        public void AssertStructureCellRulesAreEqual(StructureRule<BasicTileInfo> a, StructureRule<BasicTileInfo> b)
+        {
+            Assert.AreEqual(a.MinRadius, b.MinRadius);
+            Assert.AreEqual(a.Radius, b.Radius);
+            Assert.AreEqual(a.MinXOffset, b.MinXOffset);
+            Assert.AreEqual(a.MaxXOffset, b.MaxXOffset);
+            Assert.AreEqual(a.MinYOffset, b.MinYOffset);
+            Assert.AreEqual(a.MaxYOffset, b.MaxYOffset);
+
             AssertRulesAreEqual(a.Rule, b.Rule);
         }
 

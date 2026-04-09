@@ -45,9 +45,10 @@ namespace UT_PathEarlScout.TestScouts
                 structureCell.Name = "lake-cell";
                 structureCell.MinRadius = 0;
                 structureCell.Radius = 4;
-                structureCell.Rule.Name = "lake-cell-rule";
-                structureCell.Rule.Condition = AlwaysCondition();
-                structureCell.Rule.Outcomes.Add(OutcomeTileType("water", LiteralFloat(1f)));
+                structureCell.Rules.Add(recycler.GetStructureRule());
+                structureCell.Rules[0].Rule.Name = "lake-cell-rule";
+                structureCell.Rules[0].Rule.Condition = AlwaysCondition();
+                structureCell.Rules[0].Rule.Outcomes.Add(OutcomeTileType("water", LiteralFloat(1f)));
             }
 
             Layer<BasicTileInfo> riverLayer = recycler.GetLayer();
@@ -74,9 +75,10 @@ namespace UT_PathEarlScout.TestScouts
                 structureCell.Name = "river-cell";
                 structureCell.MinRadius = 0;
                 structureCell.Radius = 1;
-                structureCell.Rule.Name = "river-cell-rule";
-                structureCell.Rule.Condition = AlwaysCondition();
-                structureCell.Rule.Outcomes.Add(OutcomeTileType("river", LiteralFloat(1f)));
+                structureCell.Rules.Add(recycler.GetStructureRule());
+                structureCell.Rules[0].Rule.Name = "river-cell-rule";
+                structureCell.Rules[0].Rule.Condition = AlwaysCondition();
+                structureCell.Rules[0].Rule.Outcomes.Add(OutcomeTileType("river", LiteralFloat(1f)));
             }
         }
     }
