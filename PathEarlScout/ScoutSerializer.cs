@@ -634,6 +634,29 @@ namespace PathEarlScout
                 TabLevel--;
             }
 
+            if (block.Cluster)
+            {
+                WriteLine("CLUSTER");
+                TabLevel++;
+
+                if (block.ClusterCondition != null)
+                {
+                    SaveCondition(block.ClusterCondition);
+                }
+
+                Write("POINTS ");
+                Write(block.ClusterMinPoints.ToString());
+                Write("-");
+                WriteLine(block.ClusterMaxPoints.ToString());
+
+                Write("RADIUS ");
+                Write(block.ClusterMinRadius.ToString());
+                Write("-");
+                WriteLine(block.ClusterMaxRadius.ToString());
+
+                TabLevel--;
+            }
+
             // write cells
             SaveStructureCellList(block.Cells);
 
@@ -648,6 +671,7 @@ namespace PathEarlScout
             if (LastLine.Length > 6)
                 ruleName = LastLine.Substring(LastLine.IndexOf(' ') + 1).Trim();
             block.Name = ruleName;
+            block.Beam = false;
             block.BeamPathfinding = StructureBlock<T>.BEAM_PATHFINDING_SIMPLE;
             block.BeamInterval = 1;
             block.BeamWanderChance = 0;
@@ -659,6 +683,7 @@ namespace PathEarlScout
                 string lowered = LastLine.ToLower();
                 if (lowered.StartsWith("beam"))
                 {
+                    block.Beam = true;
                     TabLevel++;
 
                     while (TryReadLine())
@@ -732,7 +757,49 @@ namespace PathEarlScout
 
                     TabLevel--;
                 }
-                else 
+                else if (lowered.StartsWith("cluster"))
+                {
+                    block.Cluster = true;
+                    TabLevel++;
+
+                    while (TryReadLine())
+                    {
+                        lowered = LastLine.ToLower();
+                        if (lowered.StartsWith("? "))
+                        {
+                            UsedLastLine = false;
+                            block.ClusterCondition = LoadCondition();
+                        }
+                        else if (lowered.StartsWith("points"))
+                        {
+                            string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                            string minRange = ParseHelper.ReadToken(rangeText, '-', 0);
+                            string maxRange = rangeText.Substring(rangeText.IndexOf('-') + 1);
+                            if (!int.TryParse(minRange, out block.ClusterMinPoints))
+                                throw new Exception("Expected numerical Min Cluster Points at line " + LineCount);
+                            if (!int.TryParse(maxRange, out block.ClusterMaxPoints))
+                                throw new Exception("Expected numerical Max Cluster Points at line " + LineCount);
+                        }
+                        else if (lowered.StartsWith("radius"))
+                        {
+                            string rangeText = LastLine.Substring(LastLine.IndexOf(' ') + 1);
+                            string minRange = ParseHelper.ReadToken(rangeText, '-', 0);
+                            string maxRange = rangeText.Substring(rangeText.IndexOf('-') + 1);
+                            if (!int.TryParse(minRange, out block.ClusterMinRadius))
+                                throw new Exception("Expected numerical Min Cluster Radius at line " + LineCount);
+                            if (!int.TryParse(maxRange, out block.ClusterMaxRadius))
+                                throw new Exception("Expected numerical Max Cluster Radius at line " + LineCount);
+                        }
+                        else
+                        {
+                            UsedLastLine = false;
+                            break;
+                        }
+                    }
+
+                    TabLevel--;
+                }
+                else
                 {
                     UsedLastLine = false;
                     break;

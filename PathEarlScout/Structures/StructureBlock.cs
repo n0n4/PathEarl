@@ -21,6 +21,13 @@ namespace PathEarlScout.Structures
         public int BeamWanderRepeats = 0; // how many extra times can it wander at once?
         public ICondition<T> BeamWanderCondition = null;
 
+        public bool Cluster = false;
+        public int ClusterMinPoints = 0;
+        public int ClusterMaxPoints = 0;
+        public int ClusterMinRadius = 0;
+        public int ClusterMaxRadius = 0;
+        public ICondition<T> ClusterCondition = null;
+
         public List<StructureCell<T>> Cells;
 
         public StructureBlock(ScoutRecycler<T> recycler)
@@ -44,6 +51,12 @@ namespace PathEarlScout.Structures
             {
                 recycler.ReturnCondition(BeamWanderCondition);
                 BeamWanderCondition = null;
+            }
+
+            if (ClusterCondition != null)
+            {
+                recycler.ReturnCondition(ClusterCondition);
+                ClusterCondition = null;
             }
         }
     }

@@ -29,6 +29,8 @@ namespace PathEarlScout.Optimizers
         private List<KeywordName> ScratchNames = new List<KeywordName>();
         private List<string> ScratchStrings2 = new List<string>();
         private List<int> ScratchInts = new List<int>();
+        private List<int> ScratchInts2 = new List<int>();
+        private List<int> ScratchInts3 = new List<int>();
         private List<float> ScratchFloats = new List<float>();
         private MapScratch<T> MapScratch = new MapScratch<T>();
         private Dictionary<int, int> ScratchIntDict = new Dictionary<int, int>();
@@ -695,157 +697,251 @@ namespace PathEarlScout.Optimizers
             if (block.Cells.Count <= 0)
                 return -1;
 
+            if (block.Beam)
+            {
+                return ExecuteStructureBlockBeam(scout, block, tile, tindex);
+            }
+
+            return ExecuteStructureBlockFinal(scout, block, tindex, 0);
+        }
+
+        private int ExecuteStructureBlockFinal(Scout<T> scout, StructureBlock<T> block, int tindex, int cellIndex)
+        {
+            if (block.Cells.Count <= 0)
+                return -1;
+
+            if (block.Cluster)
+            {
+                cellIndex = 0; // cellindex always starts at 0 for clustering
+                // even if we had left off on a different one
+
+                // assemble possible point pool
+                KeywordContext<T> context = scout.Recycler.KeywordContextPool.Request();
+                ScratchInts2.Clear();
+                ScratchInts3.Clear();
+                ScratchInts3.Add(tindex);
+                if (block.ClusterMinRadius == 0)
+                    ScratchInts2.Add(tindex);
+
+                // collect all points in the right radius
+                int scanningIndex = 0;
+                int radius = 0;
+                while (radius <= block.ClusterMaxRadius)
+                {
+                    radius++;
+                    for (int i = scanningIndex; i < ScratchInts3.Count; i++)
+                    {
+                        int scanner = ScratchInts3[i];
+                        var conns = scout.Map.Nodes[scanner];
+                        foreach (var kvp in conns)
+                        {
+                            if (ScratchInts3.Contains(kvp.Key))
+                                continue; // already hit it
+                            if (radius >= block.ClusterMinRadius && radius <= block.ClusterMaxRadius)
+                            {
+                                ScratchInts2.Add(kvp.Key);
+                            }
+                            ScratchInts3.Add(kvp.Key);
+                        }
+                    }
+                }
+
+                // pick a random point
+                int r = Random.Next(block.ClusterMinPoints, block.ClusterMaxPoints + 1);
+                for (int i = 0; i < r; i++)
+                {
+                    if (ScratchInts2.Count <= 0)
+                        break;
+
+                    // pick points until one passes our condition
+                    int r2 = -1;
+                    int rindex = -1;
+                    while (true)
+                    {
+                        r2 = -1;
+                        if (ScratchInts2.Count <= 0)
+                            break;
+
+                        r2 = Random.Next(ScratchInts2.Count);
+                        rindex = ScratchInts2[r2];
+                        ScratchInts2.RemoveAt(r2); // remove from list either way
+                        if (block.ClusterCondition == null)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            context.Setup(scout.Map, scout.InfoAccess, rindex);
+                            if (block.ClusterCondition.Evaluate(context))
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (r2 == -1)
+                        break;
+
+                    // execute
+                    ExecuteStructureCell(scout, block.Cells[cellIndex], rindex);
+                    cellIndex++;
+                    if (cellIndex >= block.Cells.Count)
+                        cellIndex = 0;
+                }
+
+                scout.Recycler.KeywordContextPool.Return(context);
+
+                return tindex; // return original point
+            }
+
+            // non-cluster
+            ExecuteStructureCell(scout, block.Cells[cellIndex], tindex);
+            return tindex;
+        }
+
+
+        private int ExecuteStructureBlockBeam(Scout<T> scout, StructureBlock<T> block, Tile<T> tile, int tindex)
+        {
             // pull out some useful components
             Map<T> map = scout.Map;
             ScoutRecycler<T> recycler = scout.Recycler;
             KeywordContext<T> context = recycler.KeywordContextPool.Request();
             InfoAccess<T> infoAccess = scout.InfoAccess;
 
-            if (block.Beam)
+            // try to identify a valid point
+            int btstart = Random.Next(0, TileList.Count);
+            int btindex = btstart;
+            bool bfound = false;
+            Tile<T> btile = new Tile<T>();
+            for (int bt = 0; bt < TileList.Count; bt++)
             {
-                // try to identify a valid point
-                int btstart = Random.Next(0, TileList.Count);
-                int btindex = btstart;
-                bool bfound = false;
-                Tile<T> btile = new Tile<T>();
-                for (int bt = 0; bt < TileList.Count; bt++)
+                context.Clear();
+                btile = context.Setup(map, infoAccess, btindex);
+
+                bool failed = false;
+                if (block.BeamMaxDistance != 0 || block.BeamMinDistance != 0)
                 {
-                    context.Clear();
-                    btile = context.Setup(map, infoAccess, btindex);
-
-                    bool failed = false;
-                    if (block.BeamMaxDistance != 0 || block.BeamMinDistance != 0)
+                    double dist = Math.Sqrt(Math.Pow(tile.X - btile.X, 2) + Math.Pow(tile.Y - btile.Y, 2));
+                    if (dist < block.BeamMinDistance || (block.BeamMaxDistance != 0 && dist > block.BeamMinDistance))
                     {
-                        double dist = Math.Sqrt(Math.Pow(tile.X - btile.X, 2) + Math.Pow(tile.Y - btile.Y, 2));
-                        if (dist < block.BeamMinDistance || (block.BeamMaxDistance != 0 && dist > block.BeamMinDistance))
-                        {
-                            failed = true;
-                        }
+                        failed = true;
                     }
-
-                    if (!failed && (block.BeamTargetCondition == null || block.BeamTargetCondition.Evaluate(context)))
-                    {
-                        bfound = true;
-                        break;
-                    }
-
-                    btindex++;
-                    if (btindex >= TileList.Count)
-                        btindex = 0;
-                    if (btindex == btstart)
-                        break;
                 }
 
-                if (!bfound)
-                    return -1;
-
-                // we have both points, so we can path between them now
-                // use pathfinding to make a flow towards btile
-                Dictionary<int, int> flow = null;
-                if (block.BeamPathfinding == StructureBlock<T>.BEAM_PATHFINDING_EXPENSIVE)
-                    flow = map.DjikstraFlowfield(btindex, EMapLayer.None, MapScratch);
-
-                ScratchInts.Clear();
-                ScratchInts.Add(tindex);
-
-                int currentCellIndex = 0;
-
-                int curi = tindex;
-                while (curi != btindex)
+                if (!failed && (block.BeamTargetCondition == null || block.BeamTargetCondition.Evaluate(context)))
                 {
-                    var conns = map.Nodes[curi];
+                    bfound = true;
+                    break;
+                }
 
-                    // first, do we wander?
-                    if (block.BeamWanderChance > 0)
+                btindex++;
+                if (btindex >= TileList.Count)
+                    btindex = 0;
+                if (btindex == btstart)
+                    break;
+            }
+
+            if (!bfound)
+                return -1;
+
+            // we have both points, so we can path between them now
+            // use pathfinding to make a flow towards btile
+            Dictionary<int, int> flow = null;
+            if (block.BeamPathfinding == StructureBlock<T>.BEAM_PATHFINDING_EXPENSIVE)
+                flow = map.DjikstraFlowfield(btindex, EMapLayer.None, MapScratch);
+
+            ScratchInts.Clear();
+            ScratchInts.Add(tindex);
+
+            int currentCellIndex = 0;
+
+            int curi = tindex;
+            while (curi != btindex)
+            {
+                var conns = map.Nodes[curi];
+
+                // first, do we wander?
+                if (block.BeamWanderChance > 0)
+                {
+                    for (int w = 0; w < block.BeamWanderRepeats + 1; w++)
                     {
-                        for (int w = 0; w < block.BeamWanderRepeats + 1; w++)
+                        if (Random.NextDouble() > block.BeamWanderChance)
+                            continue;
+
+                        // find a valid point
+                        // - must meet beam condition
+                        // - must not already be in ScratchInts
+
+                        int nextIndex = -1;
+                        for (int t = 0; t < conns.Count * 2; t++)
                         {
-                            if (Random.NextDouble() > block.BeamWanderChance)
+                            int index = Random.Next(0, conns.Count);
+                            int cindex = conns.ElementAt(index).Key;
+                            if (ScratchInts.Contains(cindex))
+                                continue;
+                            context.Setup(map, infoAccess, cindex);
+
+                            if (block.BeamWanderCondition != null && !block.BeamWanderCondition.Evaluate(context))
                                 continue;
 
-                            // find a valid point
-                            // - must meet beam condition
-                            // - must not already be in ScratchInts
-
-                            int nextIndex = -1;
-                            for (int t = 0; t < conns.Count * 2; t++)
-                            {
-                                int index = Random.Next(0, conns.Count);
-                                int cindex = conns.ElementAt(index).Key;
-                                if (ScratchInts.Contains(cindex))
-                                    continue;
-                                context.Setup(map, infoAccess, cindex);
-
-                                if (block.BeamWanderCondition != null && !block.BeamWanderCondition.Evaluate(context))
-                                    continue;
-
-                                nextIndex = cindex;
-                                break;
-                            }
-
-                            if (nextIndex == -1)
-                                break;
-
-                            ExecuteStructureCell(scout, block.Cells[currentCellIndex], nextIndex);
-                            currentCellIndex++;
-                            if (currentCellIndex >= block.Cells.Count)
-                                currentCellIndex = 0;
-
-                            curi = nextIndex;
-                            ScratchInts.Add(curi);
-                            conns = map.Nodes[curi];
-                        }
-                    }
-
-                    // next, move in correct direction
-                    int correctIndex = -1;
-                    if (flow != null)
-                    {
-                        if (!flow.ContainsKey(curi))
-                        {
-                            // the flow will not contain an entry for the target point
-                            // so in this case we just stop
+                            nextIndex = cindex;
                             break;
                         }
-                        correctIndex = flow[curi];
-                    }
-                    else
-                    {
-                        if (curi == btindex)
+
+                        if (nextIndex == -1)
                             break;
 
-                        correctIndex = map.FindClosestConnectionToPoint(curi, btile.X, btile.Y);
-                        if (correctIndex == -1)
-                            break;
-                    }
+                        ExecuteStructureBlockFinal(scout, block, nextIndex, currentCellIndex);
+                        currentCellIndex++;
+                        if (currentCellIndex >= block.Cells.Count)
+                            currentCellIndex = 0;
 
-                    ExecuteStructureCell(scout, block.Cells[currentCellIndex], correctIndex);
-                    currentCellIndex++;
-                    if (currentCellIndex >= block.Cells.Count)
-                        currentCellIndex = 0;
-
-                    curi = correctIndex;
-                    ScratchInts.Add(curi);
-                    if (!map.Nodes.ContainsKey(curi))
-                    {
-                        // might happen in rare cases
-                        break;
+                        curi = nextIndex;
+                        ScratchInts.Add(curi);
+                        conns = map.Nodes[curi];
                     }
-                    conns = map.Nodes[curi];
                 }
 
-                // IMPORTANT: set tindex to our target index
-                // so the next block picks up where this one left off
-                return btindex;
+                // next, move in correct direction
+                int correctIndex = -1;
+                if (flow != null)
+                {
+                    if (!flow.ContainsKey(curi))
+                    {
+                        // the flow will not contain an entry for the target point
+                        // so in this case we just stop
+                        break;
+                    }
+                    correctIndex = flow[curi];
+                }
+                else
+                {
+                    if (curi == btindex)
+                        break;
+
+                    correctIndex = map.FindClosestConnectionToPoint(curi, btile.X, btile.Y);
+                    if (correctIndex == -1)
+                        break;
+                }
+
+                ExecuteStructureBlockFinal(scout, block, correctIndex, currentCellIndex);
+                currentCellIndex++;
+                if (currentCellIndex >= block.Cells.Count)
+                    currentCellIndex = 0;
+
+                curi = correctIndex;
+                ScratchInts.Add(curi);
+                if (!map.Nodes.ContainsKey(curi))
+                {
+                    // might happen in rare cases
+                    break;
+                }
+                conns = map.Nodes[curi];
             }
 
-            // non-beam
-            if (block.Cells.Count <= 0)
-            {
-                tindex++;
-            }
-            ExecuteStructureCell(scout, block.Cells[0], tindex);
-            return tindex;
+            // IMPORTANT: set tindex to our target index
+            // so the next block picks up where this one left off
+            return btindex;
         }
 
         private void ExecuteStructureCell(Scout<T> scout, StructureCell<T> cell, int tindex)
@@ -878,13 +974,8 @@ namespace PathEarlScout.Optimizers
             // execute each rule over the whole set, one after the other
             foreach (var rule in cell.Rules)
             {
-                for (int i = 0; i < maxRadius; i++)
+                for (int i = (rule.MinRadius ?? cell.MinRadius); i < (rule.Radius ?? cell.Radius); i++)
                 {
-                    if (rule.MinRadius != null && i < rule.MinRadius)
-                        continue;
-                    if (rule.Radius != null && i > rule.Radius)
-                        continue;
-
                     if (!ScratchIntListDict.TryGetValue(i, out List<int> list) || list == null)
                         continue;
 
