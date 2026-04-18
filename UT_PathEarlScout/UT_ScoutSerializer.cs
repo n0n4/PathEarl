@@ -348,5 +348,14 @@ namespace UT_PathEarlScout
                 StructureScout.AddRules(scout);
             });
         }
+
+        [TestMethod]
+        public void StructureCluster_SaveLoadTest()
+        {
+            SaveLoadTest("structure-cluster", (scout) =>
+            {
+                StructureClusterScout.AddRules(scout);
+            });
+        }
     }
 }

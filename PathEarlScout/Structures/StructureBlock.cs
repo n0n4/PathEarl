@@ -26,6 +26,7 @@ namespace PathEarlScout.Structures
         public int ClusterMaxPoints = 0;
         public int ClusterMinRadius = 0;
         public int ClusterMaxRadius = 0;
+        public bool ClusterIncludeOrigin = false;
         public ICondition<T> ClusterCondition = null;
 
         public List<StructureCell<T>> Cells;

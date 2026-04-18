@@ -123,6 +123,15 @@ namespace UT_PathEarlScout
         }
 
         [TestMethod]
+        public void StructureCluster_RunTest()
+        {
+            RunTest("structure-cluster", 100, 100, (scout) =>
+            {
+                StructureClusterScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
         public void StandardMap_SaveLoadRunTest()
         {
             SaveLoadRunTest("standard-map", 100, 100, (scout) =>
@@ -155,6 +164,15 @@ namespace UT_PathEarlScout
             SaveLoadRunTest("structure", 100, 100, (scout) =>
             {
                 StructureScout.AddRules(scout);
+            });
+        }
+
+        [TestMethod]
+        public void StructureCluster_SaveLoadRunTest()
+        {
+            SaveLoadRunTest("structure-cluster", 100, 100, (scout) =>
+            {
+                StructureClusterScout.AddRules(scout);
             });
         }
     }

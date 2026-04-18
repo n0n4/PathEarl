@@ -644,6 +644,11 @@ namespace PathEarlScout
                     SaveCondition(block.ClusterCondition);
                 }
 
+                if (block.ClusterIncludeOrigin)
+                {
+                    WriteLine("INCLUDE ORIGIN");
+                }
+
                 Write("POINTS ");
                 Write(block.ClusterMinPoints.ToString());
                 Write("-");
@@ -676,6 +681,7 @@ namespace PathEarlScout
             block.BeamInterval = 1;
             block.BeamWanderChance = 0;
             block.BeamWanderRepeats = 0;
+            block.ClusterIncludeOrigin = false;
 
             TabLevel++;
             while (TryReadLine())
@@ -769,6 +775,10 @@ namespace PathEarlScout
                         {
                             UsedLastLine = false;
                             block.ClusterCondition = LoadCondition();
+                        }
+                        else if (lowered.StartsWith("include origin"))
+                        {
+                            block.ClusterIncludeOrigin = true;
                         }
                         else if (lowered.StartsWith("points"))
                         {

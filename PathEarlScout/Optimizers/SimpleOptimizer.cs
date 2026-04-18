@@ -682,7 +682,7 @@ namespace PathEarlScout.Optimizers
                         // execute at the point
                         foreach (var block in structure.Blocks)
                         {
-                            int nextIndex = ExecuteStructureBlock(scout, block, tile, tindex);
+                            int nextIndex = ExecuteStructureBlock(scout, block, context, tile, tindex);
                             if (nextIndex == -1)
                                 break;
                             tindex = nextIndex;
@@ -692,20 +692,20 @@ namespace PathEarlScout.Optimizers
             }
         }
 
-        private int ExecuteStructureBlock(Scout<T> scout, StructureBlock<T> block, Tile<T> tile, int tindex)
+        private int ExecuteStructureBlock(Scout<T> scout, StructureBlock<T> block, KeywordContext<T> context, Tile<T> tile, int tindex)
         {
             if (block.Cells.Count <= 0)
                 return -1;
 
             if (block.Beam)
             {
-                return ExecuteStructureBlockBeam(scout, block, tile, tindex);
+                return ExecuteStructureBlockBeam(scout, block, context, tile, tindex);
             }
 
-            return ExecuteStructureBlockFinal(scout, block, tindex, 0);
+            return ExecuteStructureBlockFinal(scout, block, context, tindex, 0);
         }
 
-        private int ExecuteStructureBlockFinal(Scout<T> scout, StructureBlock<T> block, int tindex, int cellIndex)
+        private int ExecuteStructureBlockFinal(Scout<T> scout, StructureBlock<T> block, KeywordContext<T> context, int tindex, int cellIndex)
         {
             if (block.Cells.Count <= 0)
                 return -1;
@@ -715,8 +715,15 @@ namespace PathEarlScout.Optimizers
                 cellIndex = 0; // cellindex always starts at 0 for clustering
                 // even if we had left off on a different one
 
+                if (block.ClusterIncludeOrigin)
+                {
+                    ExecuteStructureCell(scout, block.Cells[cellIndex], tindex);
+                    cellIndex++;
+                    if (cellIndex >= block.Cells.Count)
+                        cellIndex = 0;
+                }
+
                 // assemble possible point pool
-                KeywordContext<T> context = scout.Recycler.KeywordContextPool.Request();
                 ScratchInts2.Clear();
                 ScratchInts3.Clear();
                 ScratchInts3.Add(tindex);
@@ -729,7 +736,8 @@ namespace PathEarlScout.Optimizers
                 while (radius <= block.ClusterMaxRadius)
                 {
                     radius++;
-                    for (int i = scanningIndex; i < ScratchInts3.Count; i++)
+                    int nextScanningIndex = ScratchInts3.Count;
+                    for (int i = scanningIndex; i < nextScanningIndex; i++)
                     {
                         int scanner = ScratchInts3[i];
                         var conns = scout.Map.Nodes[scanner];
@@ -744,10 +752,13 @@ namespace PathEarlScout.Optimizers
                             ScratchInts3.Add(kvp.Key);
                         }
                     }
+                    scanningIndex = nextScanningIndex;
+                    if (scanningIndex >= ScratchInts3.Count)
+                        break; // no new items to scan
                 }
 
                 // pick a random point
-                int r = Random.Next(block.ClusterMinPoints, block.ClusterMaxPoints + 1);
+                int r = Random.Next(block.ClusterMinPoints, block.ClusterMaxPoints + (!block.ClusterIncludeOrigin ? 1 : 0));
                 for (int i = 0; i < r; i++)
                 {
                     if (ScratchInts2.Count <= 0)
@@ -800,12 +811,11 @@ namespace PathEarlScout.Optimizers
         }
 
 
-        private int ExecuteStructureBlockBeam(Scout<T> scout, StructureBlock<T> block, Tile<T> tile, int tindex)
+        private int ExecuteStructureBlockBeam(Scout<T> scout, StructureBlock<T> block, KeywordContext<T> context, Tile<T> tile, int tindex)
         {
             // pull out some useful components
             Map<T> map = scout.Map;
             ScoutRecycler<T> recycler = scout.Recycler;
-            KeywordContext<T> context = recycler.KeywordContextPool.Request();
             InfoAccess<T> infoAccess = scout.InfoAccess;
 
             // try to identify a valid point
@@ -891,7 +901,7 @@ namespace PathEarlScout.Optimizers
                         if (nextIndex == -1)
                             break;
 
-                        ExecuteStructureBlockFinal(scout, block, nextIndex, currentCellIndex);
+                        ExecuteStructureBlockFinal(scout, block, context, nextIndex, currentCellIndex);
                         currentCellIndex++;
                         if (currentCellIndex >= block.Cells.Count)
                             currentCellIndex = 0;
@@ -924,7 +934,7 @@ namespace PathEarlScout.Optimizers
                         break;
                 }
 
-                ExecuteStructureBlockFinal(scout, block, correctIndex, currentCellIndex);
+                ExecuteStructureBlockFinal(scout, block, context, correctIndex, currentCellIndex);
                 currentCellIndex++;
                 if (currentCellIndex >= block.Cells.Count)
                     currentCellIndex = 0;

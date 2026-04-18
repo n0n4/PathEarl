@@ -61,8 +61,18 @@ namespace PathEarlScout.Conditions
                 {
                     foreach (var nextConn in context.Map.Nodes[connId])
                     {
-                        if (context.IsAlreadyHit(nextConn.Key) || SearchDict.ContainsKey(nextConn.Key))
+                        if (context.IsAlreadyHit(nextConn.Key))
                             continue;
+
+                        if (SearchDict.TryGetValue(nextConn.Key, out int existingRange))
+                        {
+                            // todo: is this necessary?
+                            if (existingRange > connRange + 1)
+                            {
+                                SearchDict[nextConn.Key] = connRange + 1;
+                            }
+                            continue;
+                        }
 
                         Searches.Add(nextConn.Key);
                         SearchDict.Add(nextConn.Key, connRange + 1);
