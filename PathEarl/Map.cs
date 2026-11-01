@@ -466,7 +466,11 @@ namespace PathEarlCore
 
                     float nextdist = dists[cur] + Nodes[cur][id];
                     if (cost != null)
+                    {
                         nextdist = cost(cur, id, nextdist, Info[cur], Info[id]);
+                        if (nextdist == -1)
+                            continue; // blocked
+                    }
 
                     if (nextdist < dists[id])
                     {
@@ -541,7 +545,11 @@ namespace PathEarlCore
 
                     float nextdist = dists[cur] + Nodes[cur][id];
                     if (cost != null)
+                    {
                         nextdist = cost(cur, id, nextdist, Info[cur], Info[id]);
+                        if (nextdist == -1)
+                            continue;
+                    }
 
                     if (nextdist < dists[id])
                     {
@@ -642,7 +650,11 @@ namespace PathEarlCore
                     float curdist = dists[cur];
                     float nextdist = curdist + Nodes[cur][id];
                     if (cost != null)
+                    {
                         nextdist = cost(cur, id, nextdist, Info[cur], Info[id]);
+                        if (nextdist == -1)
+                            continue;
+                    }
 
                     if (nextdist < dists[id])
                     {
